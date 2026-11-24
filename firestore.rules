@@ -1,0 +1,1389 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // PRIMITIVE HELPERS
+    // =========================================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() &&
+        request.auth.token.email is string &&
+        request.auth.token.email == 'jonathan.tadanki@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function callerUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasCallerProfile() {
+      return isSignedIn() && exists(callerUserPath());
+    }
+
+    function callerProfile() {
+      return get(callerUserPath()).data;
+    }
+
+    // Blocks Suspended or Locked users immediately at the database layer
+    function isActiveAccount() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() && (!hasCallerProfile() || callerProfile().status == 'Active')
+      );
+    }
+
+    // Blocks Read-Only Viewer & Management Viewer from creating/updating/deleting operational records
+    function isNotReadOnlyRole() {
+      return isBootstrappedAdmin() || (
+        isActiveAccount() && (!hasCallerProfile() || !(callerProfile().role in ['Read-Only Viewer', 'Management Viewer', 'Viewer']))
+      );
+    }
+
+    // Multi-Organization Isolation helper: restricts org-level admins strictly to their own orgId
+    function isOrgManagerFor(targetOrgId) {
+      return isActiveAccount() &&
+        hasCallerProfile() &&
+        callerProfile().orgId == targetOrgId &&
+        callerProfile().role in ['Organization Admin', 'Assurance Manager', 'Client Admin'];
+    }
+
+    // Auditor Assignment-Level Isolation helper: restricts assigned audits to explicitly assigned UIDs/emails
+    function isAssignedToAudit(data) {
+      return isActiveAccount() && (
+        ('assignedAuditorIds' in data && data.assignedAuditorIds is list && request.auth.uid in data.assignedAuditorIds) ||
+        ('assignedAuditorEmails' in data && data.assignedAuditorEmails is list && request.auth.token.email is string && request.auth.token.email in data.assignedAuditorEmails)
+      );
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isResourceOwner() {
+      return isActiveAccount() && existing().ownerId == request.auth.uid;
+    }
+
+    function isIncomingOwner() {
+      return isVerified() && isNotReadOnlyRole() && incoming().ownerId == request.auth.uid;
+    }
+
+    function isOptString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isReqString(data, field, minLen, maxLen) {
+      return (field in data) && data[field] is string && data[field].size() >= minLen && data[field].size() <= maxLen;
+    }
+
+    function isOptBool(data, field) {
+      return !(field in data) || data[field] is bool;
+    }
+
+    function isOptList(data, field, maxItems) {
+      return !(field in data) || (
+        data[field] is list &&
+        data[field].size() <= maxItems &&
+        (data[field].size() == 0 || data[field][0] is map || data[field][0] is string)
+      );
+    }
+
+    function isValidRole(role) {
+      return role in [
+        'Super Admin',
+        'Platform Administrator',
+        'Organization Admin',
+        'Corporate Admin',
+        'Site Admin',
+        'Department Head',
+        'Assurance Manager',
+        'Compliance Manager',
+        'EHS Manager',
+        'Quality Manager',
+        'Lead Auditor',
+        'Internal Auditor',
+        'Auditor',
+        'External Auditor',
+        'ISO Consultant',
+        'Consultant',
+        'Client Admin',
+        'Client Representative / Auditee',
+        'Client User',
+        'Supplier',
+        'Certification Coordinator',
+        'Trainer',
+        'Trainee',
+        'Employee',
+        'Management Viewer',
+        'Read-Only Viewer',
+        'Super Administrator',
+        'Organization Administrator',
+        'Audit Manager',
+        'EHS Consultant',
+        'Legal Compliance Reviewer',
+        'Food Safety Consultant',
+        'Fire Safety Consultant',
+        'Document Controller',
+        'Client Administrator',
+        'Client Auditor',
+        'Department Manager',
+        'Viewer'
+      ];
+    }
+
+    // =========================================================================
+    // ENTITY VALIDATION BLUEPRINTS
+    // =========================================================================
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+        data.keys().hasOnly(['uid', 'email', 'grantedAt']) &&
+        isValidId(data.uid) &&
+        isReqString(data, 'email', 3, 200) &&
+        isOptString(data, 'grantedAt', 60);
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'role', 'orgId', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'customRoleId', 'orgId', 'orgName', 'department', 'siteAccess', 'mfaEnabled', 'emailVerified', 'lastLoginAt', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        isReqString(data, 'displayName', 1, 150) &&
+        isReqString(data, 'email', 3, 200) &&
+        isValidRole(data.role) &&
+        isOptString(data, 'customRoleId', 128) &&
+        isValidId(data.orgId) &&
+        isOptString(data, 'orgName', 180) &&
+        isOptString(data, 'department', 120) &&
+        isOptString(data, 'siteAccess', 300) &&
+        isOptBool(data, 'mfaEnabled') &&
+        isOptBool(data, 'emailVerified') &&
+        isOptString(data, 'lastLoginAt', 60) &&
+        data.status in ['Active', 'Suspended', 'Invited', 'Locked'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidOrganization(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'industry', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'name', 'industry', 'state', 'sites', 'subscriptionTier', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'name', 1, 200) &&
+        isReqString(data, 'industry', 1, 120) &&
+        isOptString(data, 'state', 100) &&
+        isOptString(data, 'sites', 500) &&
+        (!('subscriptionTier' in data) || data.subscriptionTier in ['Enterprise', 'Professional', 'Starter']) &&
+        data.status in ['Active', 'Inactive'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidIsoAssessment(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'referenceNo', 'standardCode', 'standardName', 'status', 'complianceScore', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'referenceNo', 'standardCode', 'standardName', 'edition', 'industry', 'organizationName', 'siteLocation', 'assessmentType', 'auditDate', 'scope', 'status', 'complianceScore', 'clauses', 'executiveSummary', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'referenceNo', 1, 64) &&
+        isReqString(data, 'standardCode', 1, 40) &&
+        isReqString(data, 'standardName', 1, 160) &&
+        isOptString(data, 'edition', 40) &&
+        isOptString(data, 'industry', 120) &&
+        isOptString(data, 'organizationName', 200) &&
+        isOptString(data, 'siteLocation', 200) &&
+        isOptString(data, 'assessmentType', 80) &&
+        isOptString(data, 'auditDate', 40) &&
+        isOptString(data, 'scope', 1000) &&
+        data.status in ['Planned', 'In Progress', 'Under Review', 'Completed'] &&
+        data.complianceScore is number && data.complianceScore >= 0 && data.complianceScore <= 100 &&
+        isOptList(data, 'clauses', 120) &&
+        isOptString(data, 'executiveSummary', 6000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLegalRequirement(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'actName', 'jurisdiction', 'classification', 'verificationStatus', 'complianceStatus', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'actName', 'ruleName', 'sectionRef', 'jurisdiction', 'classification', 'authority', 'category', 'industryApplicability', 'establishmentApplicability', 'requirement', 'frequency', 'responsibleDept', 'responsiblePerson', 'requiredDocs', 'evidenceNotes', 'dueDate', 'lastVerifiedDate', 'effectiveDate', 'amendmentDate', 'legalStatus', 'officialSource', 'sourceUrl', 'verificationStatus', 'complianceStatus', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'actName', 1, 240) &&
+        isOptString(data, 'ruleName', 240) &&
+        isOptString(data, 'sectionRef', 120) &&
+        isReqString(data, 'jurisdiction', 1, 100) &&
+        data.classification in ['Central', 'State'] &&
+        isOptString(data, 'authority', 200) &&
+        isOptString(data, 'category', 120) &&
+        isOptString(data, 'industryApplicability', 200) &&
+        isOptString(data, 'establishmentApplicability', 240) &&
+        isOptString(data, 'requirement', 2500) &&
+        isOptString(data, 'frequency', 80) &&
+        isOptString(data, 'responsibleDept', 120) &&
+        isOptString(data, 'responsiblePerson', 120) &&
+        isOptString(data, 'requiredDocs', 1000) &&
+        isOptString(data, 'evidenceNotes', 1500) &&
+        isOptString(data, 'dueDate', 40) &&
+        isOptString(data, 'lastVerifiedDate', 40) &&
+        isOptString(data, 'effectiveDate', 40) &&
+        isOptString(data, 'amendmentDate', 40) &&
+        isOptString(data, 'legalStatus', 80) &&
+        isOptString(data, 'officialSource', 240) &&
+        isOptString(data, 'sourceUrl', 500) &&
+        data.verificationStatus in ['Verified Against Official Source', 'UNVERIFIED – OFFICIAL SOURCE REVIEW REQUIRED', 'Amendment Review Pending'] &&
+        data.complianceStatus in ['Compliant', 'Partially Compliant', 'Non-Compliant', 'Under Review', 'Not Applicable'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'auditRef', 'engineType', 'title', 'status', 'score', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'auditRef', 'engineType', 'title', 'clientName', 'industry', 'siteLocation', 'scope', 'leadAuditor', 'assignedAuditorIds', 'assignedAuditorEmails', 'auditDate', 'gpsLocation', 'status', 'score', 'checklistItems', 'findings', 'executiveSummary', 'auditorVerified', 'approvedBy', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'auditRef', 1, 64) &&
+        data.engineType in ['EHS', 'Food Safety', 'Fire & Life Safety', 'Environmental', 'Contractor & Vendor'] &&
+        isReqString(data, 'title', 1, 200) &&
+        isOptString(data, 'clientName', 200) &&
+        isOptString(data, 'industry', 120) &&
+        isOptString(data, 'siteLocation', 200) &&
+        isOptString(data, 'scope', 1000) &&
+        isOptString(data, 'leadAuditor', 140) &&
+        isOptList(data, 'assignedAuditorIds', 10) &&
+        isOptList(data, 'assignedAuditorEmails', 10) &&
+        isOptString(data, 'auditDate', 40) &&
+        isOptString(data, 'gpsLocation', 120) &&
+        data.status in ['Planned', 'In Progress', 'Pending Approval', 'Completed'] &&
+        data.score is number && data.score >= 0 && data.score <= 100 &&
+        isOptList(data, 'checklistItems', 150) &&
+        isOptList(data, 'findings', 150) &&
+        isOptString(data, 'executiveSummary', 6000) &&
+        isOptBool(data, 'auditorVerified') &&
+        isOptString(data, 'approvedBy', 140) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidControlledDocument(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'docNumber', 'docCategory', 'docType', 'title', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'docNumber', 'revisionNumber', 'issueDate', 'docCategory', 'docType', 'title', 'industry', 'activity', 'department', 'equipment', 'standardRef', 'siteConditions', 'hazards', 'content', 'status', 'preparedBy', 'reviewedBy', 'approvedBy', 'aiGenerated', 'revisionNotes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'docNumber', 1, 64) &&
+        isOptString(data, 'revisionNumber', 24) &&
+        isOptString(data, 'issueDate', 40) &&
+        data.docCategory in ['Risk Management', 'Safety', 'Audit', 'Food Safety'] &&
+        isReqString(data, 'docType', 1, 120) &&
+        isReqString(data, 'title', 1, 240) &&
+        isOptString(data, 'industry', 120) &&
+        isOptString(data, 'activity', 240) &&
+        isOptString(data, 'department', 120) &&
+        isOptString(data, 'equipment', 240) &&
+        isOptString(data, 'standardRef', 240) &&
+        isOptString(data, 'siteConditions', 1500) &&
+        isOptString(data, 'hazards', 1500) &&
+        isOptString(data, 'content', 50000) &&
+        data.status in ['DRAFT – REVIEW REQUIRED', 'Technical Verification', 'Approved', 'Superseded'] &&
+        isOptString(data, 'preparedBy', 140) &&
+        isOptString(data, 'reviewedBy', 140) &&
+        isOptString(data, 'approvedBy', 140) &&
+        isOptBool(data, 'aiGenerated') &&
+        isOptString(data, 'revisionNotes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidServiceAuthorization(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'serviceName', 'category', 'approvalStatus', 'authStatus', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'serviceName', 'category', 'applicableLaw', 'requiredQualification', 'requiredAuthorization', 'requiredAccreditation', 'requiredAppointment', 'competenceRequirements', 'authorizationValidity', 'verificationStatus', 'approvalStatus', 'authStatus', 'evidenceDocs', 'externalReferralGuidance', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'serviceName', 1, 200) &&
+        data.category in [
+          'CATEGORY 1 – GENERAL CONSULTANCY',
+          'CATEGORY 2 – INDEPENDENT ASSESSMENT',
+          'CATEGORY 3 – AUTHORIZATION / ACCREDITATION / STATUTORY REQUIREMENT'
+        ] &&
+        isOptString(data, 'applicableLaw', 240) &&
+        isOptString(data, 'requiredQualification', 300) &&
+        isOptString(data, 'requiredAuthorization', 300) &&
+        isOptString(data, 'requiredAccreditation', 300) &&
+        isOptString(data, 'requiredAppointment', 300) &&
+        isOptString(data, 'competenceRequirements', 400) &&
+        isOptString(data, 'authorizationValidity', 60) &&
+        isOptString(data, 'verificationStatus', 100) &&
+        data.approvalStatus in ['Approved for Delivery', 'Blocked / Restricted', 'Pending Review'] &&
+        data.authStatus in [
+          'Not Required for This Defined Consultancy Scope',
+          'Requirement Verification Pending',
+          'Authorization Required',
+          'Authorization Not Available',
+          'Authorization Verified',
+          'Authorization Expired',
+          'Restricted Service'
+        ] &&
+        isOptString(data, 'evidenceDocs', 500) &&
+        isOptString(data, 'externalReferralGuidance', 500) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidRestrictionLog(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'serviceName', 'actionAttempted', 'reason', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'serviceId', 'serviceName', 'actionAttempted', 'reason', 'actorName', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isOptString(data, 'serviceId', 128) &&
+        isReqString(data, 'serviceName', 1, 200) &&
+        isReqString(data, 'actionAttempted', 1, 120) &&
+        isReqString(data, 'reason', 1, 600) &&
+        isOptString(data, 'actorName', 140) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidCapaRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'capaRef', 'findingDescription', 'severity', 'priority', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'capaRef', 'findingRef', 'auditRef', 'findingDescription', 'severity', 'rootCause', 'fiveWhys', 'fishbone', 'correctiveAction', 'preventiveAction', 'responsiblePerson', 'department', 'targetDate', 'priority', 'status', 'closureEvidence', 'verificationNotes', 'effectivenessReview', 'escalated', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'capaRef', 1, 64) &&
+        isOptString(data, 'findingRef', 64) &&
+        isOptString(data, 'auditRef', 64) &&
+        isReqString(data, 'findingDescription', 1, 1500) &&
+        data.severity in ['Critical', 'Major', 'Minor', 'Observation'] &&
+        isOptString(data, 'rootCause', 1500) &&
+        isOptString(data, 'fiveWhys', 2000) &&
+        isOptString(data, 'fishbone', 2000) &&
+        isOptString(data, 'correctiveAction', 1500) &&
+        isOptString(data, 'preventiveAction', 1500) &&
+        isOptString(data, 'responsiblePerson', 140) &&
+        isOptString(data, 'department', 120) &&
+        isOptString(data, 'targetDate', 40) &&
+        data.priority in ['Critical', 'High', 'Medium', 'Low'] &&
+        data.status in ['Open', 'Assigned', 'In Progress', 'Pending Verification', 'Closed', 'Rejected', 'Overdue'] &&
+        isOptString(data, 'closureEvidence', 1000) &&
+        isOptString(data, 'verificationNotes', 1000) &&
+        isOptString(data, 'effectivenessReview', 1000) &&
+        isOptBool(data, 'escalated') &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMasterDataItem(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'dataType', 'code', 'name', 'active', 'version', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'dataType', 'code', 'name', 'parentId', 'description', 'criteria', 'evidenceRequired', 'riskLevel', 'active', 'version', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        data.dataType in ['Industry', 'Standard', 'AuditCategory', 'ParentModule', 'ChildModule', 'SubChildModule', 'ChecklistQuestion', 'DocumentTemplate', 'RiskCategory', 'ComplianceParameter'] &&
+        isReqString(data, 'code', 1, 64) &&
+        isReqString(data, 'name', 1, 240) &&
+        isOptString(data, 'parentId', 128) &&
+        isOptString(data, 'description', 1500) &&
+        isOptString(data, 'criteria', 1000) &&
+        isOptString(data, 'evidenceRequired', 600) &&
+        isOptString(data, 'riskLevel', 40) &&
+        data.active is bool &&
+        data.version is number && data.version >= 1 && data.version <= 9999 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditTrailEntry(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'module', 'action', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'userId', 'actorName', 'actorRole', 'eventType', 'module', 'action', 'recordId', 'entityRef', 'details', 'previousValue', 'newValue', 'result', 'ipAddress', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isOptString(data, 'userId', 128) &&
+        isOptString(data, 'actorName', 140) &&
+        isOptString(data, 'actorRole', 80) &&
+        isOptString(data, 'eventType', 80) &&
+        isReqString(data, 'module', 1, 80) &&
+        isReqString(data, 'action', 1, 120) &&
+        isOptString(data, 'recordId', 128) &&
+        isOptString(data, 'entityRef', 120) &&
+        isOptString(data, 'details', 1000) &&
+        isOptString(data, 'previousValue', 1200) &&
+        isOptString(data, 'newValue', 1200) &&
+        (!('result' in data) || data.result in ['Success', 'Denied', 'Failed']) &&
+        isOptString(data, 'ipAddress', 80) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidNotificationItem(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'title', 'severity', 'read', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'title', 'message', 'category', 'severity', 'dueDate', 'read', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'title', 1, 200) &&
+        isOptString(data, 'message', 600) &&
+        isOptString(data, 'category', 60) &&
+        data.severity in ['Info', 'Warning', 'Critical'] &&
+        isOptString(data, 'dueDate', 40) &&
+        data.read is bool &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPlatformSettings(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'companyName', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'companyName', 'tagline', 'docNumberPrefix', 'dateFormat', 'currency', 'timezone', 'retentionYears', 'emailAlertsEnabled', 'aiHumanReviewMandatory', 'superAdminOnlyWrite', 'inactivityTimeoutMinutes', 'sessionMaxHours', 'mfaEnforced', 'activityRetentionDays', 'maxFailedLoginAttempts', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'companyName', 1, 200) &&
+        isOptString(data, 'tagline', 240) &&
+        isOptString(data, 'docNumberPrefix', 40) &&
+        isOptString(data, 'dateFormat', 30) &&
+        isOptString(data, 'currency', 20) &&
+        isOptString(data, 'timezone', 60) &&
+        (!('retentionYears' in data) || (data.retentionYears is number && data.retentionYears >= 1 && data.retentionYears <= 50)) &&
+        isOptBool(data, 'emailAlertsEnabled') &&
+        isOptBool(data, 'aiHumanReviewMandatory') &&
+        isOptBool(data, 'superAdminOnlyWrite') &&
+        (!('inactivityTimeoutMinutes' in data) || (data.inactivityTimeoutMinutes is number && data.inactivityTimeoutMinutes >= 5 && data.inactivityTimeoutMinutes <= 240)) &&
+        (!('sessionMaxHours' in data) || (data.sessionMaxHours is number && data.sessionMaxHours >= 1 && data.sessionMaxHours <= 72)) &&
+        isOptBool(data, 'mfaEnforced') &&
+        (!('activityRetentionDays' in data) || (data.activityRetentionDays is number && data.activityRetentionDays >= 30 && data.activityRetentionDays <= 3650)) &&
+        (!('maxFailedLoginAttempts' in data) || (data.maxFailedLoginAttempts is number && data.maxFailedLoginAttempts >= 3 && data.maxFailedLoginAttempts <= 15)) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidActiveSession(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'userId', 'userName', 'userRole', 'loginTime', 'lastActivityAt', 'expiresAt', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'userId', 'userName', 'userEmail', 'userRole', 'orgName', 'department', 'deviceInfo', 'browserInfo', 'ipAddress', 'loginTime', 'lastActivityAt', 'expiresAt', 'status', 'revokedBy', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.userId) &&
+        isReqString(data, 'userName', 1, 150) &&
+        isOptString(data, 'userEmail', 200) &&
+        isValidRole(data.userRole) &&
+        isOptString(data, 'orgName', 180) &&
+        isOptString(data, 'department', 120) &&
+        isOptString(data, 'deviceInfo', 120) &&
+        isOptString(data, 'browserInfo', 120) &&
+        isOptString(data, 'ipAddress', 80) &&
+        isReqString(data, 'loginTime', 1, 60) &&
+        isReqString(data, 'lastActivityAt', 1, 60) &&
+        isReqString(data, 'expiresAt', 1, 60) &&
+        data.status in ['Active', 'Idle', 'Revoked', 'Expired'] &&
+        isOptString(data, 'revokedBy', 150) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLoginHistoryEntry(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'eventType', 'result', 'timestampIso', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'userId', 'userName', 'userEmail', 'userRole', 'orgName', 'eventType', 'authMethod', 'deviceInfo', 'browserInfo', 'ipAddress', 'result', 'reason', 'timestampIso', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isOptString(data, 'userId', 128) &&
+        isOptString(data, 'userName', 150) &&
+        isOptString(data, 'userEmail', 200) &&
+        isOptString(data, 'userRole', 80) &&
+        isOptString(data, 'orgName', 180) &&
+        isReqString(data, 'eventType', 1, 80) &&
+        isOptString(data, 'authMethod', 60) &&
+        isOptString(data, 'deviceInfo', 120) &&
+        isOptString(data, 'browserInfo', 120) &&
+        isOptString(data, 'ipAddress', 80) &&
+        data.result in ['Success', 'Failed', 'Blocked'] &&
+        isOptString(data, 'reason', 400) &&
+        isReqString(data, 'timestampIso', 1, 60) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidActivityEvent(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'userId', 'eventType', 'module', 'summary', 'result', 'timestampIso', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'userId', 'userName', 'userRole', 'orgName', 'department', 'eventType', 'module', 'recordId', 'entityRef', 'summary', 'previousValue', 'newValue', 'remarks', 'result', 'ipAddress', 'timestampIso', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.userId) &&
+        isOptString(data, 'userName', 150) &&
+        isOptString(data, 'userRole', 80) &&
+        isOptString(data, 'orgName', 180) &&
+        isOptString(data, 'department', 120) &&
+        isReqString(data, 'eventType', 1, 80) &&
+        isReqString(data, 'module', 1, 80) &&
+        isOptString(data, 'recordId', 128) &&
+        isOptString(data, 'entityRef', 120) &&
+        isReqString(data, 'summary', 1, 800) &&
+        isOptString(data, 'previousValue', 1200) &&
+        isOptString(data, 'newValue', 1200) &&
+        isOptString(data, 'remarks', 600) &&
+        data.result in ['Success', 'Denied', 'Failed'] &&
+        isOptString(data, 'ipAddress', 80) &&
+        isReqString(data, 'timestampIso', 1, 60) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidDocumentAccessLog(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'documentId', 'documentName', 'userId', 'accessType', 'authorized', 'timestampIso', 'createdAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'documentId', 'documentName', 'docNumber', 'userId', 'userName', 'userRole', 'orgName', 'accessType', 'exportFormat', 'authorized', 'ipAddress', 'timestampIso', 'createdAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'documentId', 1, 128) &&
+        isReqString(data, 'documentName', 1, 240) &&
+        isOptString(data, 'docNumber', 80) &&
+        isValidId(data.userId) &&
+        isOptString(data, 'userName', 150) &&
+        isOptString(data, 'userRole', 80) &&
+        isOptString(data, 'orgName', 180) &&
+        data.accessType in ['View', 'Download', 'Export', 'Approve', 'Reject'] &&
+        isOptString(data, 'exportFormat', 40) &&
+        data.authorized is bool &&
+        isOptString(data, 'ipAddress', 80) &&
+        isReqString(data, 'timestampIso', 1, 60) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidSecurityAlert(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'category', 'severity', 'title', 'description', 'status', 'timestampIso', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'category', 'severity', 'title', 'description', 'actorUserId', 'actorName', 'actorEmail', 'actorRole', 'module', 'ipAddress', 'status', 'resolvedBy', 'resolutionNotes', 'timestampIso', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'category', 1, 80) &&
+        data.severity in ['Low', 'Medium', 'High', 'Critical'] &&
+        isReqString(data, 'title', 1, 200) &&
+        isReqString(data, 'description', 1, 1000) &&
+        isOptString(data, 'actorUserId', 128) &&
+        isOptString(data, 'actorName', 150) &&
+        isOptString(data, 'actorEmail', 200) &&
+        isOptString(data, 'actorRole', 80) &&
+        isOptString(data, 'module', 80) &&
+        isOptString(data, 'ipAddress', 80) &&
+        data.status in ['Open', 'Investigating', 'Resolved', 'Dismissed'] &&
+        isOptString(data, 'resolvedBy', 150) &&
+        isOptString(data, 'resolutionNotes', 800) &&
+        isReqString(data, 'timestampIso', 1, 60) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCustomRole(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'name', 'baseRole', 'permissions', 'active', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'name', 'baseRole', 'description', 'permissions', 'active', 'createdBy', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'name', 1, 120) &&
+        isValidRole(data.baseRole) &&
+        isOptString(data, 'description', 600) &&
+        data.permissions is map &&
+        data.permissions.size() <= 30 &&
+        data.active is bool &&
+        isOptString(data, 'createdBy', 150) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTrainingRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'courseCode', 'courseTitle', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'courseCode', 'courseTitle', 'standardRef', 'trainerName', 'scheduledDate', 'mode', 'department', 'attendeesCount', 'completionRate', 'assessmentPassScore', 'status', 'certificateRef', 'notes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'courseCode', 1, 64) &&
+        isReqString(data, 'courseTitle', 1, 200) &&
+        isOptString(data, 'standardRef', 120) &&
+        isOptString(data, 'trainerName', 140) &&
+        isOptString(data, 'scheduledDate', 40) &&
+        (!('mode' in data) || data.mode in ['Live Online', 'On-Site Workshop', 'Self-Paced Module']) &&
+        isOptString(data, 'department', 120) &&
+        (!('attendeesCount' in data) || (data.attendeesCount is number && data.attendeesCount >= 0 && data.attendeesCount <= 10000)) &&
+        (!('completionRate' in data) || (data.completionRate is number && data.completionRate >= 0 && data.completionRate <= 100)) &&
+        (!('assessmentPassScore' in data) || (data.assessmentPassScore is number && data.assessmentPassScore >= 0 && data.assessmentPassScore <= 100)) &&
+        data.status in ['Scheduled', 'In Progress', 'Completed', 'Cancelled'] &&
+        isOptString(data, 'certificateRef', 120) &&
+        isOptString(data, 'notes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCertificationApplication(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'applicationRef', 'clientName', 'standardCode', 'stage', 'documentsReady', 'authorizationVerified', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'applicationRef', 'clientName', 'standardCode', 'accreditedBodyName', 'stage', 'coordinatorName', 'targetAssessmentDate', 'renewalDueDate', 'documentsReady', 'authorizationVerified', 'notes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'applicationRef', 1, 64) &&
+        isReqString(data, 'clientName', 1, 200) &&
+        isReqString(data, 'standardCode', 1, 60) &&
+        isOptString(data, 'accreditedBodyName', 200) &&
+        isReqString(data, 'stage', 1, 80) &&
+        isOptString(data, 'coordinatorName', 140) &&
+        isOptString(data, 'targetAssessmentDate', 40) &&
+        isOptString(data, 'renewalDueDate', 40) &&
+        data.documentsReady is bool &&
+        data.authorizationVerified is bool &&
+        isOptString(data, 'notes', 1200) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidRiskRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'riskRef', 'title', 'category', 'hazardOrThreat', 'likelihood', 'consequence', 'inherentScore', 'controlEffectiveness', 'residualLikelihood', 'residualConsequence', 'residualScore', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'riskRef', 'title', 'category', 'industry', 'siteLocation', 'department', 'standardRef', 'hazardOrThreat', 'existingControls', 'likelihood', 'consequence', 'inherentScore', 'controlEffectiveness', 'residualLikelihood', 'residualConsequence', 'residualScore', 'mitigationPlan', 'riskOwner', 'reviewDate', 'status', 'aiRecommended', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'riskRef', 1, 64) &&
+        isReqString(data, 'title', 1, 200) &&
+        isReqString(data, 'category', 1, 80) &&
+        isOptString(data, 'industry', 120) &&
+        isOptString(data, 'siteLocation', 180) &&
+        isOptString(data, 'department', 120) &&
+        isOptString(data, 'standardRef', 120) &&
+        isReqString(data, 'hazardOrThreat', 1, 1000) &&
+        isOptString(data, 'existingControls', 1000) &&
+        data.likelihood is number && data.likelihood >= 1 && data.likelihood <= 5 &&
+        data.consequence is number && data.consequence >= 1 && data.consequence <= 5 &&
+        data.inherentScore is number && data.inherentScore >= 1 && data.inherentScore <= 25 &&
+        data.controlEffectiveness in ['Strong', 'Adequate', 'Partial', 'Weak'] &&
+        data.residualLikelihood is number && data.residualLikelihood >= 1 && data.residualLikelihood <= 5 &&
+        data.residualConsequence is number && data.residualConsequence >= 1 && data.residualConsequence <= 5 &&
+        data.residualScore is number && data.residualScore >= 1 && data.residualScore <= 25 &&
+        isOptString(data, 'mitigationPlan', 1200) &&
+        isOptString(data, 'riskOwner', 140) &&
+        isOptString(data, 'reviewDate', 40) &&
+        data.status in ['Open', 'Mitigating', 'Controlled', 'Accepted', 'Closed'] &&
+        isOptBool(data, 'aiRecommended') &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSupplierRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'supplierCode', 'companyName', 'category', 'evaluationScore', 'riskTier', 'complianceDocsStatus', 'openCapaCount', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'supplierCode', 'companyName', 'category', 'country', 'contactName', 'contactEmail', 'isoCertifications', 'evaluationScore', 'esgScore', 'riskTier', 'complianceDocsStatus', 'lastAuditDate', 'nextAuditDate', 'openCapaCount', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'supplierCode', 1, 64) &&
+        isReqString(data, 'companyName', 1, 200) &&
+        isReqString(data, 'category', 1, 120) &&
+        isOptString(data, 'country', 100) &&
+        isOptString(data, 'contactName', 140) &&
+        isOptString(data, 'contactEmail', 200) &&
+        isOptString(data, 'isoCertifications', 300) &&
+        data.evaluationScore is number && data.evaluationScore >= 0 && data.evaluationScore <= 100 &&
+        (!('esgScore' in data) || (data.esgScore is number && data.esgScore >= 0 && data.esgScore <= 100)) &&
+        data.riskTier in ['Low', 'Medium', 'High', 'Critical'] &&
+        data.complianceDocsStatus in ['Verified', 'Pending Review', 'Incomplete', 'Expired'] &&
+        isOptString(data, 'lastAuditDate', 40) &&
+        isOptString(data, 'nextAuditDate', 40) &&
+        data.openCapaCount is number && data.openCapaCount >= 0 && data.openCapaCount <= 1000 &&
+        data.status in ['Approved', 'Conditional', 'Under Evaluation', 'Suspended'] &&
+        isOptString(data, 'notes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidManagementReview(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'reviewRef', 'title', 'standardScope', 'meetingDate', 'chairperson', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'reviewRef', 'title', 'standardScope', 'meetingDate', 'chairperson', 'attendees', 'agendaItems', 'auditPerformanceSummary', 'customerFeedbackSummary', 'riskOpportunitySummary', 'capaStatusSummary', 'decisionsAndActions', 'minutesSummary', 'nextReviewDate', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'reviewRef', 1, 64) &&
+        isReqString(data, 'title', 1, 200) &&
+        isReqString(data, 'standardScope', 1, 200) &&
+        isReqString(data, 'meetingDate', 1, 40) &&
+        isReqString(data, 'chairperson', 1, 140) &&
+        isOptString(data, 'attendees', 500) &&
+        isOptString(data, 'agendaItems', 1500) &&
+        isOptString(data, 'auditPerformanceSummary', 1500) &&
+        isOptString(data, 'customerFeedbackSummary', 1500) &&
+        isOptString(data, 'riskOpportunitySummary', 1500) &&
+        isOptString(data, 'capaStatusSummary', 1500) &&
+        isOptString(data, 'decisionsAndActions', 2000) &&
+        isOptString(data, 'minutesSummary', 2500) &&
+        isOptString(data, 'nextReviewDate', 40) &&
+        data.status in ['Scheduled', 'In Progress', 'Completed', 'Approved'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEsgMetric(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'metricRef', 'pillar', 'category', 'reportingPeriod', 'metricName', 'value', 'unit', 'verificationStatus', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'metricRef', 'pillar', 'category', 'reportingPeriod', 'siteLocation', 'metricName', 'value', 'unit', 'targetValue', 'frameworkRef', 'verificationStatus', 'notes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'metricRef', 1, 64) &&
+        data.pillar in ['Environmental', 'Social', 'Governance'] &&
+        isReqString(data, 'category', 1, 80) &&
+        isReqString(data, 'reportingPeriod', 1, 60) &&
+        isOptString(data, 'siteLocation', 180) &&
+        isReqString(data, 'metricName', 1, 200) &&
+        data.value is number && data.value >= 0 && data.value <= 1000000000 &&
+        isReqString(data, 'unit', 1, 60) &&
+        (!('targetValue' in data) || (data.targetValue is number && data.targetValue >= 0 && data.targetValue <= 1000000000)) &&
+        isOptString(data, 'frameworkRef', 120) &&
+        data.verificationStatus in ['Verified', 'Draft', 'Pending Review'] &&
+        isOptString(data, 'notes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEvidenceRecord(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'evidenceRef', 'title', 'evidenceType', 'approvalStatus', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'evidenceRef', 'auditRef', 'standardRef', 'title', 'evidenceType', 'fileName', 'tags', 'uploadedBy', 'siteLocation', 'approvalStatus', 'reviewerNotes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'evidenceRef', 1, 64) &&
+        isOptString(data, 'auditRef', 64) &&
+        isOptString(data, 'standardRef', 80) &&
+        isReqString(data, 'title', 1, 200) &&
+        isReqString(data, 'evidenceType', 1, 60) &&
+        isOptString(data, 'fileName', 240) &&
+        isOptString(data, 'tags', 300) &&
+        isOptString(data, 'uploadedBy', 140) &&
+        isOptString(data, 'siteLocation', 180) &&
+        data.approvalStatus in ['Pending Review', 'Approved', 'Rejected'] &&
+        isOptString(data, 'reviewerNotes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditorProfile(data) {
+      return data.keys().hasAll(['orgId', 'ownerId', 'auditorCode', 'fullName', 'email', 'auditorType', 'qualifications', 'certifiedStandards', 'availability', 'activeAssignments', 'maxWorkload', 'conflictOfInterestDeclared', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['orgId', 'ownerId', 'auditorCode', 'fullName', 'email', 'auditorType', 'qualifications', 'certifiedStandards', 'availability', 'activeAssignments', 'maxWorkload', 'conflictOfInterestDeclared', 'coiNotes', 'createdAt', 'updatedAt']) &&
+        isValidId(data.orgId) &&
+        isValidId(data.ownerId) &&
+        isReqString(data, 'auditorCode', 1, 64) &&
+        isReqString(data, 'fullName', 1, 150) &&
+        isReqString(data, 'email', 3, 200) &&
+        data.auditorType in ['Lead Auditor', 'Internal Auditor', 'External Auditor', 'Technical Specialist'] &&
+        isReqString(data, 'qualifications', 1, 400) &&
+        isReqString(data, 'certifiedStandards', 1, 400) &&
+        data.availability in ['Available', 'Assigned', 'On Leave', 'Unavailable'] &&
+        data.activeAssignments is number && data.activeAssignments >= 0 && data.activeAssignments <= 100 &&
+        data.maxWorkload is number && data.maxWorkload >= 1 && data.maxWorkload <= 100 &&
+        data.conflictOfInterestDeclared is bool &&
+        isOptString(data, 'coiNotes', 600) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // CONNECTION TEST PATH (Read-Only)
+    // =========================================================================
+    match /test/connection {
+      allow get: if isSignedIn();
+    }
+
+    // =========================================================================
+    // ADMINS COLLECTION (Strict Bootstrapped Admin Only)
+    // =========================================================================
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(userId) && isValidAdmin(incoming()) && isAdmin() && incoming().uid == userId;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // USERS COLLECTION (PII Isolation + Super Admin Only Edit / Standard User Signup)
+    // =========================================================================
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin() || isOrgManagerFor(existing().orgId));
+      allow list: if isBootstrappedAdmin();
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isOwner(userId) &&
+            incoming().role == 'Read-Only Viewer' &&
+            incoming().status == 'Active'
+          )
+        );
+      allow update: if isSignedIn() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isActiveAccount() &&
+            isOwner(userId) &&
+            incoming().role == existing().role &&
+            incoming().status == existing().status &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['emailVerified', 'lastLoginAt', 'updatedAt'])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // =========================================================================
+    // ORGANIZATIONS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /organizations/{orgId} {
+      allow get: if isValidId(orgId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(orgId) &&
+        isValidOrganization(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(orgId) &&
+        isValidOrganization(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(orgId) && isAdmin();
+    }
+
+    // =========================================================================
+    // ISO GAP ASSESSMENTS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /isoAssessments/{assessmentId} {
+      allow get: if isValidId(assessmentId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(assessmentId) &&
+        isValidIsoAssessment(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(assessmentId) &&
+        isValidIsoAssessment(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(assessmentId) && isAdmin();
+    }
+
+    // =========================================================================
+    // LEGAL REQUIREMENTS REGISTER (Super Admin Only Write)
+    // =========================================================================
+    match /legalRequirements/{reqId} {
+      allow get: if isValidId(reqId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(reqId) &&
+        isValidLegalRequirement(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(reqId) &&
+        isValidLegalRequirement(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(reqId) && isAdmin();
+    }
+
+    // =========================================================================
+    // UNIFIED AUDITS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /audits/{auditId} {
+      allow get: if isValidId(auditId) && (
+        isAdmin() ||
+        isResourceOwner() ||
+        isOrgManagerFor(existing().orgId) ||
+        isAssignedToAudit(existing())
+      );
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isNotReadOnlyRole() &&
+        isValidId(auditId) &&
+        isValidAuditRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isNotReadOnlyRole() &&
+        isValidId(auditId) &&
+        isValidAuditRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(auditId) && isAdmin();
+    }
+
+    // =========================================================================
+    // CONTROLLED DOCUMENTS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /documents/{docId} {
+      allow get: if isValidId(docId) && (isResourceOwner() || isAdmin() || isOrgManagerFor(existing().orgId));
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isNotReadOnlyRole() &&
+        isValidId(docId) &&
+        isValidControlledDocument(incoming()) &&
+        isIncomingOwner() &&
+        incoming().status == 'DRAFT – REVIEW REQUIRED' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isNotReadOnlyRole() &&
+        isValidId(docId) &&
+        isValidControlledDocument(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    // =========================================================================
+    // SERVICE AUTHORIZATIONS (Super Admin Only Write)
+    // =========================================================================
+    match /serviceAuthorizations/{serviceId} {
+      allow get: if isValidId(serviceId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(serviceId) &&
+        isValidServiceAuthorization(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(serviceId) &&
+        isValidServiceAuthorization(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(serviceId) && isAdmin();
+    }
+
+    // =========================================================================
+    // RESTRICTION LOGS (Append-Only Immutable Audit Log)
+    // =========================================================================
+    match /restrictionLogs/{logId} {
+      allow get: if isValidId(logId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidRestrictionLog(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // CAPA MANAGEMENT COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /capas/{capaId} {
+      allow get: if isValidId(capaId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(capaId) &&
+        isValidCapaRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(capaId) &&
+        isValidCapaRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(capaId) && isAdmin();
+    }
+
+    // =========================================================================
+    // MASTER DATA & DYNAMIC MODULE BUILDER COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /masterData/{itemId} {
+      allow get: if isValidId(itemId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(itemId) &&
+        isValidMasterDataItem(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(itemId) &&
+        isValidMasterDataItem(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(itemId) && isAdmin();
+    }
+
+    // =========================================================================
+    // PLATFORM AUDIT TRAIL (Append-Only Immutable Log)
+    // =========================================================================
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidAuditTrailEntry(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // NOTIFICATIONS COLLECTION (Super Admin Create/Delete, Owner Mark-Read Only)
+    // =========================================================================
+    match /notifications/{notifId} {
+      allow get: if isValidId(notifId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(notifId) &&
+        isValidNotificationItem(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(notifId) &&
+        isValidNotificationItem(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt && (
+          isAdmin() || (
+            isResourceOwner() &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+          )
+        );
+      allow delete: if isValidId(notifId) && isAdmin();
+    }
+
+    // =========================================================================
+    // SETTINGS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(settingId) &&
+        isValidPlatformSettings(incoming()) &&
+        isIncomingOwner() &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(settingId) &&
+        isValidPlatformSettings(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(settingId) && isAdmin();
+    }
+
+    // =========================================================================
+    // ACTIVE SESSIONS COLLECTION (Live Active Users & Admin Revocation)
+    // =========================================================================
+    match /activeSessions/{sessionId} {
+      allow get: if isValidId(sessionId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(sessionId) &&
+        isValidActiveSession(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().userId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(sessionId) &&
+        isValidActiveSession(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().userId == existing().userId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isResourceOwner() &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['lastActivityAt', 'status', 'updatedAt'])
+          )
+        );
+      allow delete: if isValidId(sessionId) && (isAdmin() || isResourceOwner());
+    }
+
+    // =========================================================================
+    // LOGIN HISTORY COLLECTION (Append-Only Immutable Security Log)
+    // =========================================================================
+    match /loginHistory/{entryId} {
+      allow get: if isValidId(entryId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(entryId) &&
+        isValidLoginHistoryEntry(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // ACTIVITY EVENTS COLLECTION (Append-Only Tamper-Resistant Timeline)
+    // =========================================================================
+    match /activityEvents/{eventId} {
+      allow get: if isValidId(eventId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(eventId) &&
+        isValidActivityEvent(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().userId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // DOCUMENT ACCESS LOGS COLLECTION (Append-Only Immutable Log)
+    // =========================================================================
+    match /documentAccessLogs/{logId} {
+      allow get: if isValidId(logId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        isValidDocumentAccessLog(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().userId == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // SECURITY ALERTS COLLECTION (Incident Detection & Admin Triage)
+    // =========================================================================
+    match /securityAlerts/{alertId} {
+      allow get: if isValidId(alertId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(alertId) &&
+        isValidSecurityAlert(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().status == 'Open' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() &&
+        isValidId(alertId) &&
+        isValidSecurityAlert(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // CUSTOM ROLES COLLECTION (Admin-Controlled Granular Permissions)
+    // =========================================================================
+    match /customRoles/{roleId} {
+      allow get: if isValidId(roleId) && (isResourceOwner() || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerified() &&
+        isValidId(roleId) &&
+        isValidCustomRole(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerified() &&
+        isValidId(roleId) &&
+        isValidCustomRole(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow delete: if isValidId(roleId) && isAdmin();
+    }
+
+    // =========================================================================
+    // TRAINING & COMPETENCY RECORDS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /trainingRecords/{recordId} {
+      allow get: if isValidId(recordId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(recordId) &&
+        isValidTrainingRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(recordId) &&
+        isValidTrainingRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(recordId) && isAdmin();
+    }
+
+    // =========================================================================
+    // CERTIFICATION APPLICATIONS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /certificationApplications/{appId} {
+      allow get: if isValidId(appId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(appId) &&
+        isValidCertificationApplication(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(appId) &&
+        isValidCertificationApplication(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(appId) && isAdmin();
+    }
+
+    // =========================================================================
+    // ENTERPRISE RISKS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /risks/{riskId} {
+      allow get: if isValidId(riskId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(riskId) &&
+        isValidRiskRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(riskId) &&
+        isValidRiskRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(riskId) && isAdmin();
+    }
+
+    // =========================================================================
+    // SUPPLIERS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /suppliers/{supplierId} {
+      allow get: if isValidId(supplierId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(supplierId) &&
+        isValidSupplierRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(supplierId) &&
+        isValidSupplierRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(supplierId) && isAdmin();
+    }
+
+    // =========================================================================
+    // MANAGEMENT REVIEWS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /managementReviews/{reviewId} {
+      allow get: if isValidId(reviewId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(reviewId) &&
+        isValidManagementReview(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(reviewId) &&
+        isValidManagementReview(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(reviewId) && isAdmin();
+    }
+
+    // =========================================================================
+    // ESG & SUSTAINABILITY METRICS COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /esgMetrics/{metricId} {
+      allow get: if isValidId(metricId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(metricId) &&
+        isValidEsgMetric(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(metricId) &&
+        isValidEsgMetric(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(metricId) && isAdmin();
+    }
+
+    // =========================================================================
+    // AUDIT EVIDENCE VAULT COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /evidenceRecords/{evidenceId} {
+      allow get: if isValidId(evidenceId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(evidenceId) &&
+        isValidEvidenceRecord(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(evidenceId) &&
+        isValidEvidenceRecord(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(evidenceId) && isAdmin();
+    }
+
+    // =========================================================================
+    // AUDITOR PROFILES & COMPETENCY COLLECTION (Super Admin Only Write)
+    // =========================================================================
+    match /auditorProfiles/{auditorId} {
+      allow get: if isValidId(auditorId) && (isResourceOwner() || isAdmin());
+      allow list: if isActiveAccount() && (existing().ownerId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isAdmin() &&
+        isValidId(auditorId) &&
+        isValidAuditorProfile(incoming()) &&
+        isIncomingOwner() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isAdmin() &&
+        isValidId(auditorId) &&
+        isValidAuditorProfile(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().orgId == existing().orgId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(auditorId) && isAdmin();
+    }
+  }
+}

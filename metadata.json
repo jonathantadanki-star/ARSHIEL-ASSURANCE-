@@ -1,0 +1,8 @@
+{
+  "name": "ARSHIEL ASSURANCE",
+  "description": "AI-Powered Independent Third-Party Auditing, ISO Gap Analysis, EHS Auditing, Indian Legal Compliance, Food Safety, Fire & Environmental Assessment, CAPA, and Authorization Control Platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

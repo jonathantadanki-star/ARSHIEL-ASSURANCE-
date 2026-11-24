@@ -1,0 +1,892 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted super-administrator registry document keyed by user UID.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account profile and RBAC role assignment.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "role": {
+          "type": "string",
+          "enum": [
+            "Super Admin",
+            "Platform Administrator",
+            "Organization Admin",
+            "Corporate Admin",
+            "Site Admin",
+            "Department Head",
+            "Assurance Manager",
+            "Compliance Manager",
+            "EHS Manager",
+            "Quality Manager",
+            "Lead Auditor",
+            "Internal Auditor",
+            "Auditor",
+            "External Auditor",
+            "ISO Consultant",
+            "Consultant",
+            "Client Admin",
+            "Client Representative / Auditee",
+            "Client User",
+            "Supplier",
+            "Certification Coordinator",
+            "Trainer",
+            "Trainee",
+            "Employee",
+            "Management Viewer",
+            "Read-Only Viewer",
+            "Super Administrator",
+            "Organization Administrator",
+            "Audit Manager",
+            "EHS Consultant",
+            "Legal Compliance Reviewer",
+            "Food Safety Consultant",
+            "Fire Safety Consultant",
+            "Document Controller",
+            "Client Administrator",
+            "Client Auditor",
+            "Department Manager",
+            "Viewer"
+          ]
+        },
+        "customRoleId": { "type": "string", "maxLength": 128 },
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "orgName": { "type": "string", "maxLength": 180 },
+        "department": { "type": "string", "maxLength": 120 },
+        "siteAccess": { "type": "string", "maxLength": 300 },
+        "mfaEnabled": { "type": "boolean" },
+        "emailVerified": { "type": "boolean" },
+        "lastLoginAt": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["Active", "Suspended", "Invited", "Locked"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email", "role", "orgId", "status", "createdAt", "updatedAt"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "Client or enterprise organization isolated by orgId.",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "industry": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "state": { "type": "string", "maxLength": 100 },
+        "sites": { "type": "string", "maxLength": 500 },
+        "subscriptionTier": { "type": "string", "enum": ["Enterprise", "Professional", "Starter"] },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "name", "industry", "status", "createdAt", "updatedAt"]
+    },
+    "IsoAssessment": {
+      "title": "IsoAssessment",
+      "description": "ISO clause-wise gap analysis record.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "referenceNo": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "standardCode": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "standardName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "edition": { "type": "string", "maxLength": 40 },
+        "industry": { "type": "string", "maxLength": 120 },
+        "organizationName": { "type": "string", "maxLength": 200 },
+        "siteLocation": { "type": "string", "maxLength": 200 },
+        "assessmentType": { "type": "string", "maxLength": 80 },
+        "auditDate": { "type": "string", "maxLength": 40 },
+        "scope": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["Planned", "In Progress", "Under Review", "Completed"] },
+        "complianceScore": { "type": "number" },
+        "clauses": { "type": "array" },
+        "executiveSummary": { "type": "string", "maxLength": 6000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "referenceNo", "standardCode", "standardName", "status", "complianceScore", "createdAt", "updatedAt"]
+    },
+    "LegalRequirement": {
+      "title": "LegalRequirement",
+      "description": "Indian Central, Andhra Pradesh, and Telangana legal compliance register entry.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actName": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "ruleName": { "type": "string", "maxLength": 240 },
+        "sectionRef": { "type": "string", "maxLength": 120 },
+        "jurisdiction": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "classification": { "type": "string", "enum": ["Central", "State"] },
+        "authority": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 120 },
+        "industryApplicability": { "type": "string", "maxLength": 200 },
+        "establishmentApplicability": { "type": "string", "maxLength": 240 },
+        "requirement": { "type": "string", "maxLength": 2500 },
+        "frequency": { "type": "string", "maxLength": 80 },
+        "responsibleDept": { "type": "string", "maxLength": 120 },
+        "responsiblePerson": { "type": "string", "maxLength": 120 },
+        "requiredDocs": { "type": "string", "maxLength": 1000 },
+        "evidenceNotes": { "type": "string", "maxLength": 1500 },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "lastVerifiedDate": { "type": "string", "maxLength": 40 },
+        "effectiveDate": { "type": "string", "maxLength": 40 },
+        "amendmentDate": { "type": "string", "maxLength": 40 },
+        "legalStatus": { "type": "string", "maxLength": 80 },
+        "officialSource": { "type": "string", "maxLength": 240 },
+        "sourceUrl": { "type": "string", "maxLength": 500 },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["Verified Against Official Source", "UNVERIFIED – OFFICIAL SOURCE REVIEW REQUIRED", "Amendment Review Pending"]
+        },
+        "complianceStatus": {
+          "type": "string",
+          "enum": ["Compliant", "Partially Compliant", "Non-Compliant", "Under Review", "Not Applicable"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "actName", "jurisdiction", "classification", "verificationStatus", "complianceStatus", "createdAt", "updatedAt"]
+    },
+    "AuditRecord": {
+      "title": "AuditRecord",
+      "description": "Unified audit record for EHS, Food Safety, Fire & Life Safety, Environmental, and Contractor/Vendor audits.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "auditRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "engineType": {
+          "type": "string",
+          "enum": ["EHS", "Food Safety", "Fire & Life Safety", "Environmental", "Contractor & Vendor"]
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "clientName": { "type": "string", "maxLength": 200 },
+        "industry": { "type": "string", "maxLength": 120 },
+        "siteLocation": { "type": "string", "maxLength": 200 },
+        "scope": { "type": "string", "maxLength": 1000 },
+        "leadAuditor": { "type": "string", "maxLength": 140 },
+        "assignedAuditorIds": { "type": "array", "description": "Authorized UIDs of assigned auditors (max 10)." },
+        "assignedAuditorEmails": { "type": "array", "description": "Authorized emails of assigned auditors (max 10)." },
+        "auditDate": { "type": "string", "maxLength": 40 },
+        "gpsLocation": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["Planned", "In Progress", "Pending Approval", "Completed"] },
+        "score": { "type": "number" },
+        "checklistItems": { "type": "array" },
+        "findings": { "type": "array" },
+        "executiveSummary": { "type": "string", "maxLength": 6000 },
+        "auditorVerified": { "type": "boolean" },
+        "approvedBy": { "type": "string", "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "auditRef", "engineType", "title", "status", "score", "createdAt", "updatedAt"]
+    },
+    "ControlledDocument": {
+      "title": "ControlledDocument",
+      "description": "AI-generated and human-reviewed EHS, ISO, Risk, Audit, and Food Safety documents.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "docNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "revisionNumber": { "type": "string", "maxLength": 24 },
+        "issueDate": { "type": "string", "maxLength": 40 },
+        "docCategory": { "type": "string", "enum": ["Risk Management", "Safety", "Audit", "Food Safety"] },
+        "docType": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "industry": { "type": "string", "maxLength": 120 },
+        "activity": { "type": "string", "maxLength": 240 },
+        "department": { "type": "string", "maxLength": 120 },
+        "equipment": { "type": "string", "maxLength": 240 },
+        "standardRef": { "type": "string", "maxLength": 240 },
+        "siteConditions": { "type": "string", "maxLength": 1500 },
+        "hazards": { "type": "string", "maxLength": 1500 },
+        "content": { "type": "string", "maxLength": 50000 },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT – REVIEW REQUIRED", "Technical Verification", "Approved", "Superseded"]
+        },
+        "preparedBy": { "type": "string", "maxLength": 140 },
+        "reviewedBy": { "type": "string", "maxLength": 140 },
+        "approvedBy": { "type": "string", "maxLength": 140 },
+        "aiGenerated": { "type": "boolean" },
+        "revisionNotes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "docNumber", "docCategory", "docType", "title", "status", "createdAt", "updatedAt"]
+    },
+    "ServiceAuthorization": {
+      "title": "ServiceAuthorization",
+      "description": "Mandatory Legal Authorization Control Engine record governing service eligibility.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "serviceName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "CATEGORY 1 – GENERAL CONSULTANCY",
+            "CATEGORY 2 – INDEPENDENT ASSESSMENT",
+            "CATEGORY 3 – AUTHORIZATION / ACCREDITATION / STATUTORY REQUIREMENT"
+          ]
+        },
+        "applicableLaw": { "type": "string", "maxLength": 240 },
+        "requiredQualification": { "type": "string", "maxLength": 300 },
+        "requiredAuthorization": { "type": "string", "maxLength": 300 },
+        "requiredAccreditation": { "type": "string", "maxLength": 300 },
+        "requiredAppointment": { "type": "string", "maxLength": 300 },
+        "competenceRequirements": { "type": "string", "maxLength": 400 },
+        "authorizationValidity": { "type": "string", "maxLength": 60 },
+        "verificationStatus": { "type": "string", "maxLength": 100 },
+        "approvalStatus": { "type": "string", "enum": ["Approved for Delivery", "Blocked / Restricted", "Pending Review"] },
+        "authStatus": {
+          "type": "string",
+          "enum": [
+            "Not Required for This Defined Consultancy Scope",
+            "Requirement Verification Pending",
+            "Authorization Required",
+            "Authorization Not Available",
+            "Authorization Verified",
+            "Authorization Expired",
+            "Restricted Service"
+          ]
+        },
+        "evidenceDocs": { "type": "string", "maxLength": 500 },
+        "externalReferralGuidance": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "serviceName", "category", "approvalStatus", "authStatus", "createdAt", "updatedAt"]
+    },
+    "RestrictionLog": {
+      "title": "RestrictionLog",
+      "description": "Immutable log of blocked attempts on restricted services.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "serviceId": { "type": "string", "maxLength": 128 },
+        "serviceName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "actionAttempted": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "reason": { "type": "string", "maxLength": 600 },
+        "actorName": { "type": "string", "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "serviceName", "actionAttempted", "reason", "createdAt"]
+    },
+    "CapaRecord": {
+      "title": "CapaRecord",
+      "description": "Centralized Corrective and Preventive Action tracking record.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "capaRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "findingRef": { "type": "string", "maxLength": 64 },
+        "auditRef": { "type": "string", "maxLength": 64 },
+        "findingDescription": { "type": "string", "minLength": 1, "maxLength": 1500 },
+        "severity": { "type": "string", "enum": ["Critical", "Major", "Minor", "Observation"] },
+        "rootCause": { "type": "string", "maxLength": 1500 },
+        "fiveWhys": { "type": "string", "maxLength": 2000 },
+        "fishbone": { "type": "string", "maxLength": 2000 },
+        "correctiveAction": { "type": "string", "maxLength": 1500 },
+        "preventiveAction": { "type": "string", "maxLength": 1500 },
+        "responsiblePerson": { "type": "string", "maxLength": 140 },
+        "department": { "type": "string", "maxLength": 120 },
+        "targetDate": { "type": "string", "maxLength": 40 },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "status": { "type": "string", "enum": ["Open", "Assigned", "In Progress", "Pending Verification", "Closed", "Rejected", "Overdue"] },
+        "closureEvidence": { "type": "string", "maxLength": 1000 },
+        "verificationNotes": { "type": "string", "maxLength": 1000 },
+        "effectivenessReview": { "type": "string", "maxLength": 1000 },
+        "escalated": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "capaRef", "findingDescription", "severity", "priority", "status", "createdAt", "updatedAt"]
+    },
+    "MasterDataItem": {
+      "title": "MasterDataItem",
+      "description": "Dynamic hierarchy & master data item (Industries, Standards, Parent/Child/Sub-Child Modules, Checklist Questions, Templates, Risk Categories).",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "dataType": {
+          "type": "string",
+          "enum": [
+            "Industry",
+            "Standard",
+            "AuditCategory",
+            "ParentModule",
+            "ChildModule",
+            "SubChildModule",
+            "ChecklistQuestion",
+            "DocumentTemplate",
+            "RiskCategory",
+            "ComplianceParameter"
+          ]
+        },
+        "code": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "parentId": { "type": "string", "maxLength": 128 },
+        "description": { "type": "string", "maxLength": 1500 },
+        "criteria": { "type": "string", "maxLength": 1000 },
+        "evidenceRequired": { "type": "string", "maxLength": 600 },
+        "riskLevel": { "type": "string", "maxLength": 40 },
+        "active": { "type": "boolean" },
+        "version": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "dataType", "code", "name", "active", "version", "createdAt", "updatedAt"]
+    },
+    "AuditTrailEntry": {
+      "title": "AuditTrailEntry",
+      "description": "Immutable security and governance audit trail record.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 140 },
+        "actorRole": { "type": "string", "maxLength": 80 },
+        "eventType": { "type": "string", "maxLength": 80 },
+        "module": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "action": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "recordId": { "type": "string", "maxLength": 128 },
+        "entityRef": { "type": "string", "maxLength": 120 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "previousValue": { "type": "string", "maxLength": 1200 },
+        "newValue": { "type": "string", "maxLength": 1200 },
+        "result": { "type": "string", "enum": ["Success", "Denied", "Failed"] },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "module", "action", "createdAt"]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "Compliance deadlines, CAPA overdue, and authorization expiry alerts.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 600 },
+        "category": { "type": "string", "maxLength": 60 },
+        "severity": { "type": "string", "enum": ["Info", "Warning", "Critical"] },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "title", "severity", "read", "createdAt"]
+    },
+    "PlatformSettings": {
+      "title": "PlatformSettings",
+      "description": "Organization branding, document numbering, session security, and governance settings.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "companyName": { "type": "string", "maxLength": 200 },
+        "tagline": { "type": "string", "maxLength": 240 },
+        "docNumberPrefix": { "type": "string", "maxLength": 40 },
+        "dateFormat": { "type": "string", "maxLength": 30 },
+        "currency": { "type": "string", "maxLength": 20 },
+        "timezone": { "type": "string", "maxLength": 60 },
+        "retentionYears": { "type": "number" },
+        "emailAlertsEnabled": { "type": "boolean" },
+        "aiHumanReviewMandatory": { "type": "boolean" },
+        "inactivityTimeoutMinutes": { "type": "number" },
+        "sessionMaxHours": { "type": "number" },
+        "mfaEnforced": { "type": "boolean" },
+        "activityRetentionDays": { "type": "number" },
+        "maxFailedLoginAttempts": { "type": "number" },
+        "superAdminOnlyWrite": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "companyName", "updatedAt"]
+    },
+    "ActiveSession": {
+      "title": "ActiveSession",
+      "description": "Live authenticated user session record with heartbeat and admin revocation support.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userName": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "userEmail": { "type": "string", "maxLength": 200 },
+        "userRole": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "orgName": { "type": "string", "maxLength": 180 },
+        "department": { "type": "string", "maxLength": 120 },
+        "deviceInfo": { "type": "string", "maxLength": 120 },
+        "browserInfo": { "type": "string", "maxLength": 120 },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "loginTime": { "type": "string", "maxLength": 60 },
+        "lastActivityAt": { "type": "string", "maxLength": 60 },
+        "expiresAt": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["Active", "Idle", "Revoked", "Expired"] },
+        "revokedBy": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "userId", "userName", "userRole", "loginTime", "lastActivityAt", "expiresAt", "status", "createdAt", "updatedAt"]
+    },
+    "LoginHistoryEntry": {
+      "title": "LoginHistoryEntry",
+      "description": "Append-only immutable record of login, logout, password reset, MFA, and lockout events.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 150 },
+        "userEmail": { "type": "string", "maxLength": 200 },
+        "userRole": { "type": "string", "maxLength": 80 },
+        "orgName": { "type": "string", "maxLength": 180 },
+        "eventType": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "authMethod": { "type": "string", "maxLength": 60 },
+        "deviceInfo": { "type": "string", "maxLength": 120 },
+        "browserInfo": { "type": "string", "maxLength": 120 },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "result": { "type": "string", "enum": ["Success", "Failed", "Blocked"] },
+        "reason": { "type": "string", "maxLength": 400 },
+        "timestampIso": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "eventType", "result", "timestampIso", "createdAt"]
+    },
+    "ActivityEvent": {
+      "title": "ActivityEvent",
+      "description": "Append-only tamper-resistant user activity, modification, and approval timeline event.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 150 },
+        "userRole": { "type": "string", "maxLength": 80 },
+        "orgName": { "type": "string", "maxLength": 180 },
+        "department": { "type": "string", "maxLength": 120 },
+        "eventType": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "module": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "recordId": { "type": "string", "maxLength": 128 },
+        "entityRef": { "type": "string", "maxLength": 120 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 800 },
+        "previousValue": { "type": "string", "maxLength": 1200 },
+        "newValue": { "type": "string", "maxLength": 1200 },
+        "remarks": { "type": "string", "maxLength": 600 },
+        "result": { "type": "string", "enum": ["Success", "Denied", "Failed"] },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "timestampIso": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "userId", "eventType", "module", "summary", "result", "timestampIso", "createdAt"]
+    },
+    "DocumentAccessLog": {
+      "title": "DocumentAccessLog",
+      "description": "Append-only controlled document view, download, export, and approval access log.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "documentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "documentName": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "docNumber": { "type": "string", "maxLength": 80 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 150 },
+        "userRole": { "type": "string", "maxLength": 80 },
+        "orgName": { "type": "string", "maxLength": 180 },
+        "accessType": { "type": "string", "enum": ["View", "Download", "Export", "Approve", "Reject"] },
+        "exportFormat": { "type": "string", "maxLength": 40 },
+        "authorized": { "type": "boolean" },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "timestampIso": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "documentId", "documentName", "userId", "accessType", "authorized", "timestampIso", "createdAt"]
+    },
+    "SecurityAlert": {
+      "title": "SecurityAlert",
+      "description": "Security Alert Centre incident record for lockouts, unauthorized attempts, and suspicious activity.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "severity": { "type": "string", "enum": ["Low", "Medium", "High", "Critical"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "actorUserId": { "type": "string", "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 150 },
+        "actorEmail": { "type": "string", "maxLength": 200 },
+        "actorRole": { "type": "string", "maxLength": 80 },
+        "module": { "type": "string", "maxLength": 80 },
+        "ipAddress": { "type": "string", "maxLength": 80 },
+        "status": { "type": "string", "enum": ["Open", "Investigating", "Resolved", "Dismissed"] },
+        "resolvedBy": { "type": "string", "maxLength": 150 },
+        "resolutionNotes": { "type": "string", "maxLength": 800 },
+        "timestampIso": { "type": "string", "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "category", "severity", "title", "description", "status", "timestampIso", "createdAt", "updatedAt"]
+    },
+    "CustomRole": {
+      "title": "CustomRole",
+      "description": "Admin-defined granular RBAC role with custom module-level permissions.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "baseRole": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 600 },
+        "permissions": { "type": "object" },
+        "active": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "name", "baseRole", "permissions", "active", "createdAt", "updatedAt"]
+    },
+    "TrainingRecord": {
+      "title": "TrainingRecord",
+      "description": "ISO, EHS, and compliance training courses, attendance, and competency records.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "courseCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "courseTitle": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "standardRef": { "type": "string", "maxLength": 120 },
+        "trainerName": { "type": "string", "maxLength": 140 },
+        "scheduledDate": { "type": "string", "maxLength": 40 },
+        "mode": { "type": "string", "enum": ["Live Online", "On-Site Workshop", "Self-Paced Module"] },
+        "department": { "type": "string", "maxLength": 120 },
+        "attendeesCount": { "type": "number" },
+        "completionRate": { "type": "number" },
+        "assessmentPassScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["Scheduled", "In Progress", "Completed", "Cancelled"] },
+        "certificateRef": { "type": "string", "maxLength": 120 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "courseCode", "courseTitle", "status", "createdAt", "updatedAt"]
+    },
+    "CertificationApplication": {
+      "title": "CertificationApplication",
+      "description": "Certification support application tracking, accredited-body liaison, and renewal alerts.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "applicationRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "clientName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "standardCode": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "accreditedBodyName": { "type": "string", "maxLength": 200 },
+        "stage": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "coordinatorName": { "type": "string", "maxLength": 140 },
+        "targetAssessmentDate": { "type": "string", "maxLength": 40 },
+        "renewalDueDate": { "type": "string", "maxLength": 40 },
+        "documentsReady": { "type": "boolean" },
+        "authorizationVerified": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 1200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "applicationRef", "clientName", "standardCode", "stage", "documentsReady", "authorizationVerified", "createdAt", "updatedAt"]
+    },
+    "RiskRecord": {
+      "title": "RiskRecord",
+      "description": "Enterprise Risk Intelligence register with inherent/residual scoring and mitigation plans.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "riskRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "industry": { "type": "string", "maxLength": 120 },
+        "siteLocation": { "type": "string", "maxLength": 180 },
+        "department": { "type": "string", "maxLength": 120 },
+        "standardRef": { "type": "string", "maxLength": 120 },
+        "hazardOrThreat": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "existingControls": { "type": "string", "maxLength": 1000 },
+        "likelihood": { "type": "number" },
+        "consequence": { "type": "number" },
+        "inherentScore": { "type": "number" },
+        "controlEffectiveness": { "type": "string", "enum": ["Strong", "Adequate", "Partial", "Weak"] },
+        "residualLikelihood": { "type": "number" },
+        "residualConsequence": { "type": "number" },
+        "residualScore": { "type": "number" },
+        "mitigationPlan": { "type": "string", "maxLength": 1200 },
+        "riskOwner": { "type": "string", "maxLength": 140 },
+        "reviewDate": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["Open", "Mitigating", "Controlled", "Accepted", "Closed"] },
+        "aiRecommended": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "riskRef", "title", "category", "hazardOrThreat", "likelihood", "consequence", "inherentScore", "controlEffectiveness", "residualLikelihood", "residualConsequence", "residualScore", "status", "createdAt", "updatedAt"]
+    },
+    "SupplierRecord": {
+      "title": "SupplierRecord",
+      "description": "Supplier portal registration, compliance evaluation, risk tiering, and audit tracking.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "supplierCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "companyName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "country": { "type": "string", "maxLength": 100 },
+        "contactName": { "type": "string", "maxLength": 140 },
+        "contactEmail": { "type": "string", "maxLength": 200 },
+        "isoCertifications": { "type": "string", "maxLength": 300 },
+        "evaluationScore": { "type": "number" },
+        "esgScore": { "type": "number" },
+        "riskTier": { "type": "string", "enum": ["Low", "Medium", "High", "Critical"] },
+        "complianceDocsStatus": { "type": "string", "enum": ["Verified", "Pending Review", "Incomplete", "Expired"] },
+        "lastAuditDate": { "type": "string", "maxLength": 40 },
+        "nextAuditDate": { "type": "string", "maxLength": 40 },
+        "openCapaCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Approved", "Conditional", "Under Evaluation", "Suspended"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "supplierCode", "companyName", "category", "evaluationScore", "riskTier", "complianceDocsStatus", "openCapaCount", "status", "createdAt", "updatedAt"]
+    },
+    "ManagementReviewRecord": {
+      "title": "ManagementReviewRecord",
+      "description": "ISO Clause 9.3 Management Review meetings, KPI inputs, decisions, and minutes.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reviewRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "standardScope": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "meetingDate": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "chairperson": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "attendees": { "type": "string", "maxLength": 500 },
+        "agendaItems": { "type": "string", "maxLength": 1500 },
+        "auditPerformanceSummary": { "type": "string", "maxLength": 1500 },
+        "customerFeedbackSummary": { "type": "string", "maxLength": 1500 },
+        "riskOpportunitySummary": { "type": "string", "maxLength": 1500 },
+        "capaStatusSummary": { "type": "string", "maxLength": 1500 },
+        "decisionsAndActions": { "type": "string", "maxLength": 2000 },
+        "minutesSummary": { "type": "string", "maxLength": 2500 },
+        "nextReviewDate": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["Scheduled", "In Progress", "Completed", "Approved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "reviewRef", "title", "standardScope", "meetingDate", "chairperson", "status", "createdAt", "updatedAt"]
+    },
+    "EsgMetricRecord": {
+      "title": "EsgMetricRecord",
+      "description": "ESG, GHG Scope 1/2/3 carbon, energy, water, waste, social, and governance metrics.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "metricRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "pillar": { "type": "string", "enum": ["Environmental", "Social", "Governance"] },
+        "category": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "reportingPeriod": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "siteLocation": { "type": "string", "maxLength": 180 },
+        "metricName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "targetValue": { "type": "number" },
+        "frameworkRef": { "type": "string", "maxLength": 120 },
+        "verificationStatus": { "type": "string", "enum": ["Verified", "Draft", "Pending Review"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "metricRef", "pillar", "category", "reportingPeriod", "metricName", "value", "unit", "verificationStatus", "createdAt", "updatedAt"]
+    },
+    "EvidenceRecord": {
+      "title": "EvidenceRecord",
+      "description": "Centralized audit evidence vault metadata with tagging, traceability, and approval status.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "evidenceRef": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "auditRef": { "type": "string", "maxLength": 64 },
+        "standardRef": { "type": "string", "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "evidenceType": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "fileName": { "type": "string", "maxLength": 240 },
+        "tags": { "type": "string", "maxLength": 300 },
+        "uploadedBy": { "type": "string", "maxLength": 140 },
+        "siteLocation": { "type": "string", "maxLength": 180 },
+        "approvalStatus": { "type": "string", "enum": ["Pending Review", "Approved", "Rejected"] },
+        "reviewerNotes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "evidenceRef", "title", "evidenceType", "approvalStatus", "createdAt", "updatedAt"]
+    },
+    "AuditorProfileRecord": {
+      "title": "AuditorProfileRecord",
+      "description": "Auditor qualification, availability, workload allocation, and COI registry.",
+      "type": "object",
+      "properties": {
+        "orgId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "auditorCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "auditorType": { "type": "string", "enum": ["Lead Auditor", "Internal Auditor", "External Auditor", "Technical Specialist"] },
+        "qualifications": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "certifiedStandards": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "availability": { "type": "string", "enum": ["Available", "Assigned", "On Leave", "Unavailable"] },
+        "activeAssignments": { "type": "number" },
+        "maxWorkload": { "type": "number" },
+        "conflictOfInterestDeclared": { "type": "boolean" },
+        "coiNotes": { "type": "string", "maxLength": 600 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgId", "ownerId", "auditorCode", "fullName", "email", "auditorType", "qualifications", "certifiedStandards", "availability", "activeAssignments", "maxWorkload", "conflictOfInterestDeclared", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted super-admin registry."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles with PII strictly isolated to owner or super-admin."
+    },
+    "/organizations/{orgId}": {
+      "schema": { "$ref": "#/entities/Organization" },
+      "description": "Multi-tenant client organizations."
+    },
+    "/isoAssessments/{assessmentId}": {
+      "schema": { "$ref": "#/entities/IsoAssessment" },
+      "description": "ISO clause-wise gap assessments."
+    },
+    "/legalRequirements/{reqId}": {
+      "schema": { "$ref": "#/entities/LegalRequirement" },
+      "description": "Indian Central, AP, and Telangana legal register entries."
+    },
+    "/audits/{auditId}": {
+      "schema": { "$ref": "#/entities/AuditRecord" },
+      "description": "EHS, Food Safety, Fire & Life Safety, Environmental, and Contractor/Vendor audits."
+    },
+    "/documents/{docId}": {
+      "schema": { "$ref": "#/entities/ControlledDocument" },
+      "description": "AI-generated and controlled EHS/ISO/Food Safety documents."
+    },
+    "/serviceAuthorizations/{serviceId}": {
+      "schema": { "$ref": "#/entities/ServiceAuthorization" },
+      "description": "Mandatory Legal Authorization Control records."
+    },
+    "/restrictionLogs/{logId}": {
+      "schema": { "$ref": "#/entities/RestrictionLog" },
+      "description": "Immutable log of blocked restricted service attempts."
+    },
+    "/capas/{capaId}": {
+      "schema": { "$ref": "#/entities/CapaRecord" },
+      "description": "Centralized CAPA management records."
+    },
+    "/masterData/{itemId}": {
+      "schema": { "$ref": "#/entities/MasterDataItem" },
+      "description": "Dynamic industries, modules, checklists, standards, and templates."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditTrailEntry" },
+      "description": "Immutable platform audit trail."
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/NotificationItem" },
+      "description": "Deadline, CAPA overdue, and authorization alerts."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/PlatformSettings" },
+      "description": "Platform and organization configuration settings."
+    },
+    "/activeSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ActiveSession" },
+      "description": "Live authenticated session tracking and revocation."
+    },
+    "/loginHistory/{entryId}": {
+      "schema": { "$ref": "#/entities/LoginHistoryEntry" },
+      "description": "Immutable login, logout, password reset, and MFA event history."
+    },
+    "/activityEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/ActivityEvent" },
+      "description": "Immutable user activity, modification, and approval timeline."
+    },
+    "/documentAccessLogs/{logId}": {
+      "schema": { "$ref": "#/entities/DocumentAccessLog" },
+      "description": "Immutable controlled document view, download, and export access logs."
+    },
+    "/securityAlerts/{alertId}": {
+      "schema": { "$ref": "#/entities/SecurityAlert" },
+      "description": "Security Alert Centre incidents and investigation status."
+    },
+    "/customRoles/{roleId}": {
+      "schema": { "$ref": "#/entities/CustomRole" },
+      "description": "Admin-defined custom RBAC roles and module permission matrices."
+    },
+    "/trainingRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/TrainingRecord" },
+      "description": "ISO and EHS training sessions, attendance, and certificates."
+    },
+    "/certificationApplications/{appId}": {
+      "schema": { "$ref": "#/entities/CertificationApplication" },
+      "description": "Certification support applications, readiness, and renewal alerts."
+    },
+    "/risks/{riskId}": {
+      "schema": { "$ref": "#/entities/RiskRecord" },
+      "description": "Enterprise Risk Intelligence register and 5x5 heatmap data."
+    },
+    "/suppliers/{supplierId}": {
+      "schema": { "$ref": "#/entities/SupplierRecord" },
+      "description": "Supplier evaluation, compliance documents, and risk tiering."
+    },
+    "/managementReviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ManagementReviewRecord" },
+      "description": "ISO Management Review meetings, KPI inputs, decisions, and minutes."
+    },
+    "/esgMetrics/{metricId}": {
+      "schema": { "$ref": "#/entities/EsgMetricRecord" },
+      "description": "ESG, GHG emissions, energy, water, waste, social, and governance metrics."
+    },
+    "/evidenceRecords/{evidenceId}": {
+      "schema": { "$ref": "#/entities/EvidenceRecord" },
+      "description": "Centralized audit evidence vault metadata and approval tracking."
+    },
+    "/auditorProfiles/{auditorId}": {
+      "schema": { "$ref": "#/entities/AuditorProfileRecord" },
+      "description": "Auditor database, qualifications, workload, and COI declarations."
+    }
+  }
+}

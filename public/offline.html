@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#071329" />
+    <title>Offline — ARSHIEL ASSURANCE</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: radial-gradient(circle at top, #0f2954 0%, #071329 58%, #040b18 100%);
+        color: #f8fafc;
+      }
+      .card {
+        width: 100%;
+        max-width: 460px;
+        background: rgba(11, 31, 58, 0.94);
+        border: 1px solid rgba(8, 123, 255, 0.38);
+        border-radius: 20px;
+        padding: 28px 24px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        text-align: center;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(245, 184, 46, 0.14);
+        border: 1px solid rgba(245, 184, 46, 0.4);
+        color: #f5b82e;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin-bottom: 18px;
+      }
+      .shield {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 14px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #087bff 0%, #00d4ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 28px rgba(8, 123, 255, 0.35);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        line-height: 1.25;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 18px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #cbd5e1;
+      }
+      .info {
+        text-align: left;
+        background: rgba(7, 19, 41, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 20px;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: #94a3b8;
+      }
+      .info strong {
+        color: #e2e8f0;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      button,
+      a {
+        flex: 1 1 160px;
+        min-height: 44px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        cursor: pointer;
+        border: 0;
+      }
+      .primary {
+        background: #087bff;
+        color: #ffffff;
+      }
+      .secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: #e2e8f0;
+      }
+      .footer {
+        margin-top: 18px;
+        font-size: 11px;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <div class="shield" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#071329" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+      </div>
+      <div class="badge">OFFLINE MODE · ARSHIEL ASSURANCE</div>
+      <h1>You are currently offline</h1>
+      <p>
+        ARSHIEL ASSURANCE cannot reach the live compliance server right now. Check your Wi-Fi or mobile data connection to sync audits, AI engines, and CAPA records.
+      </p>
+      <div class="info">
+        <strong>Security &amp; Privacy Notice:</strong> Private business data, live Firestore records, authentication tokens, and AI reports are never stored in unencrypted offline HTTP caches. Reconnect to resume live synchronized operations.
+      </div>
+      <div class="actions">
+        <button type="button" class="primary" onclick="window.location.reload()">
+          Retry Connection
+        </button>
+        <a href="/" class="secondary">Open App Home</a>
+      </div>
+      <div class="footer">ARSHIEL ASSURANCE · Independent Auditing, ISO &amp; Compliance Platform</div>
+    </main>
+    <script>
+      window.addEventListener('online', function () {
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>

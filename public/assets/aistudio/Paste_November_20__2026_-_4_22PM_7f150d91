@@ -1,0 +1,1088 @@
+# MASTER PROMPT – ARSHIEL ASSURANCE
+## AI-POWERED ISO, EHS, LEGAL COMPLIANCE & THIRD-PARTY AUDITING MANAGEMENT PLATFORM
+
+Act as a Senior AI Application Architect, Full-Stack Developer, ISO Management System Expert, EHS Auditor, Indian Legal Compliance Specialist, Food Safety Consultant, Fire Safety Consultant, Database Architect and Enterprise SaaS Product Designer.
+
+Build a complete, production-oriented, AI-powered auditing and compliance management application under the brand name:
+
+# ARSHIEL ASSURANCE
+
+Tagline:
+"Assessing Risks. Strengthening Compliance. Improving Performance."
+
+Application Type:
+AI-Powered Independent Third-Party Auditing, ISO Gap Analysis, EHS Auditing, Legal Compliance, Food Safety, Risk Assessment and Documentation Management Platform.
+
+The application must support multiple industries, multiple organizations, multiple locations, multiple standards, unlimited dynamic modules, customizable checklists, AI-generated documents and automated audit reports.
+
+IMPORTANT:
+ARSHIEL ASSURANCE operates as an independent consultancy and assessment platform. It must not falsely represent itself as an accredited ISO certification body, government inspection agency, statutory auditor, OSHA enforcement authority, IOSH-approved training provider, NFPA-authorized organization or FSSAI licensing authority.
+
+All functions must respect applicable legal requirements, professional competence and required authorizations.
+
+---
+
+# 1. MAIN APPLICATION DASHBOARD
+
+Create a professional enterprise dashboard.
+
+Display the following primary modules:
+
+1. AI ISO GAP ANALYSIS ENGINE
+2. AI LEGAL COMPLIANCE ENGINE
+3. AI EHS AUDIT ENGINE
+4. AI DOCUMENT GENERATOR
+5. LEGAL AUTHORIZATION CONTROL
+6. FOOD SAFETY AUDIT ENGINE
+7. FIRE & LIFE SAFETY AUDIT ENGINE
+8. ENVIRONMENTAL COMPLIANCE ENGINE
+9. CONTRACTOR & VENDOR AUDIT ENGINE
+10. INDUSTRY MANAGEMENT ENGINE
+11. AUDIT REPORT MANAGEMENT
+12. CAPA MANAGEMENT
+13. MASTER DATA MANAGEMENT
+14. USER & ROLE MANAGEMENT
+15. SETTINGS & ADMINISTRATION
+
+Dashboard KPI cards:
+
+- Total Audits
+- Completed Audits
+- Planned Audits
+- Open Findings
+- Critical Findings
+- Major Findings
+- Minor Findings
+- Pending CAPA
+- Overdue CAPA
+- ISO Gap Assessment Score
+- Legal Compliance Status
+- Industry-wise Audit Statistics
+- Document Generation Statistics
+- Authorization Restricted Services
+
+Include interactive charts, filters, date ranges, industry filters, location filters and export options.
+
+---
+
+# 2. AI ISO GAP ANALYSIS ENGINE
+
+Build a comprehensive AI-powered ISO clause-wise gap assessment engine.
+
+Supported ISO Standards:
+
+- ISO 9001 – Quality Management
+- ISO 14001 – Environmental Management
+- ISO 45001 – Occupational Health & Safety
+- ISO 50001 – Energy Management
+- ISO 27001 – Information Security
+- ISO 22000 – Food Safety Management
+- ISO 22301 – Business Continuity
+- ISO 13485 – Medical Device Quality Management
+- ISO 20000-1 – IT Service Management
+- ISO 14064 – Greenhouse Gas Accounting
+- ISO 31000 – Risk Management Guidelines
+- ISO 26000 – Social Responsibility Guidance
+
+FUNCTIONAL REQUIREMENTS:
+
+A. Standard Selection
+
+Allow users to select:
+- ISO Standard
+- Standard Edition / Version
+- Industry
+- Organization
+- Site / Location
+- Assessment Type
+- Audit Date
+- Assessment Scope
+
+B. Clause-wise Assessment
+
+Display applicable clauses and subclauses in a hierarchical structure.
+
+For each clause provide:
+
+- Clause Number
+- Clause Title
+- Requirement Description
+- Applicability
+- Assessment Question
+- Expected Evidence
+- Evidence Upload
+- Implementation Status
+- Compliance Status
+- Gap Description
+- Risk Classification
+- Auditor Comments
+- Recommended Corrective Action
+- Responsible Person
+- Target Date
+- Closure Status
+
+Assessment Status:
+
+- Compliant
+- Partially Compliant
+- Non-Compliant
+- Not Applicable
+- Not Verified
+- Pending Evidence
+
+C. AI Assessment
+
+AI must:
+
+1. Interpret the selected clause.
+2. Generate relevant assessment questions.
+3. Identify missing documentation.
+4. Review uploaded evidence.
+5. Identify potential gaps.
+6. Suggest corrective actions.
+7. Generate clause-wise observations.
+8. Generate management recommendations.
+9. Calculate assessment scores using configurable scoring rules.
+10. Generate a complete gap analysis report.
+
+D. Gap Analysis Report
+
+Include:
+
+- Executive Summary
+- Standard Details
+- Assessment Scope
+- Clause-wise Assessment
+- Compliance Score
+- Identified Gaps
+- Risk Classification
+- Evidence References
+- Corrective Action Plan
+- Improvement Recommendations
+- Management Summary
+
+IMPORTANT:
+Use legally obtained, authorized and version-controlled standard requirements. Do not reproduce copyrighted ISO standards in full without permission. AI-generated clause interpretations must be identified as assistance, not authoritative interpretations.
+
+Never represent the result as an ISO certification or accredited certification audit.
+
+---
+
+# 3. AI LEGAL COMPLIANCE ENGINE
+
+Build a dynamic Indian Legal Compliance Management System.
+
+Primary geographical coverage:
+
+- India
+- Andhra Pradesh
+- Telangana
+
+Architecture must allow future addition of all Indian States and Union Territories.
+
+A. LEGAL REGISTER DATABASE
+
+Create a dynamic legal register containing:
+
+- Law / Act Name
+- Rule / Regulation Name
+- Section / Rule Reference
+- Jurisdiction
+- Central / State Classification
+- Department / Regulatory Authority
+- Industry Applicability
+- Establishment Applicability
+- Compliance Requirement
+- Compliance Frequency
+- Responsible Department
+- Responsible Person
+- Required Documents
+- Evidence
+- Due Date
+- Last Verified Date
+- Effective Date
+- Amendment Date
+- Current Legal Status
+- Official Government Source
+- Source URL
+- Verification Status
+
+B. LEGAL SUBJECT CATEGORIES
+
+1. Occupational Safety & Health
+2. Labour & Employment
+3. Factory & Industrial Establishments
+4. Electrical Safety
+5. Fire & Life Safety
+6. Environmental Protection
+7. Air Pollution Control
+8. Water Pollution Control
+9. Hazardous Waste
+10. E-Waste Management
+11. Chemical Safety
+12. Gas Cylinder Safety
+13. Building & Construction Safety
+14. Contractor Labour Compliance
+15. Occupational Health & Welfare
+16. POSH Compliance
+17. Food Safety & Hygiene
+18. Boiler & Pressure Equipment
+19. Petroleum & Explosives-related compliance
+20. Emergency Preparedness
+
+C. CENTRAL LEGAL FRAMEWORK
+
+Include applicability tracking for:
+
+- Occupational Safety, Health and Working Conditions Code, 2020
+- Applicable Central Rules and State Rules
+- Applicable saved and transitional legal provisions
+- Environment Protection Act, 1986
+- Air Act, 1981
+- Water Act, 1974
+- Electricity Act, 2003
+- Applicable CEA Safety Regulations
+- Hazardous and Other Wastes Rules
+- E-Waste Management Rules
+- Gas Cylinders Rules
+- MSIHC Rules
+- Chemical Accidents Rules
+- Public Liability Insurance Act
+- POSH Act
+- Applicable building and fire safety requirements
+- FSS Act, 2006
+- Applicable FSSAI Regulations
+- Applicable BOCW-related requirements
+
+D. ANDHRA PRADESH LEGAL MODULE
+
+Create a separate Andhra Pradesh legal compliance database.
+
+Include:
+
+- Applicable Andhra Pradesh Occupational Safety Rules
+- Applicable Factory / Industrial Establishment Rules
+- Andhra Pradesh Pollution Control Board requirements
+- Andhra Pradesh Fire Services requirements
+- Applicable electrical safety requirements
+- Applicable labour and welfare requirements
+- Applicable local building and fire regulations
+- Food safety requirements
+- Applicable State-specific environmental notifications
+
+E. TELANGANA LEGAL MODULE
+
+Create a separate Telangana legal compliance database.
+
+Include:
+
+- Applicable Telangana Occupational Safety Rules
+- Applicable Factory / Industrial Establishment Rules
+- Telangana State Pollution Control Board requirements
+- Telangana Fire Services requirements
+- Applicable electrical safety requirements
+- Applicable labour and welfare requirements
+- Applicable local building and fire regulations
+- Food safety requirements
+- Applicable State-specific environmental notifications
+
+IMPORTANT LEGAL ACCURACY:
+
+Do not invent legal provisions, statutory deadlines, regulatory requirements or government notifications.
+
+Every legal requirement must have:
+
+- Official source
+- Applicable jurisdiction
+- Effective date
+- Latest verification date
+- Amendment history
+- Legal applicability
+- Verification status
+
+Use official sources such as India Code, Central Government ministries, State Government departments, APPCB, TSPCB, FSSAI and relevant regulatory authorities.
+
+If a rule or notification cannot be verified, mark it:
+
+"UNVERIFIED – OFFICIAL SOURCE REVIEW REQUIRED"
+
+Never silently classify unverified legal information as current law.
+
+F. AI LEGAL COMPLIANCE FEATURES
+
+AI must:
+
+1. Identify applicable laws based on industry and location.
+2. Generate a legal register.
+3. Generate compliance checklists.
+4. Identify missing documents.
+5. Track due dates and renewal dates.
+6. Generate compliance gap reports.
+7. Suggest corrective actions.
+8. Track regulatory amendments.
+9. Notify users about upcoming compliance deadlines.
+10. Display legal applicability explanations.
+11. Highlight unverified legal information.
+12. Maintain source citations and audit trails.
+
+Do not guarantee legal compliance or replace professional legal advice.
+
+---
+
+# 4. AI EHS AUDIT ENGINE
+
+Build an unlimited dynamic EHS auditing engine.
+
+A. INDUSTRY MASTER
+
+Include:
+
+- Semiconductor
+- Data Centers
+- Pharmaceuticals
+- Manufacturing
+- FMCG
+- IT & Corporate Offices
+- Construction
+- Infrastructure
+- Healthcare
+- Hospitals
+- Chemical
+- Oil & Gas
+- Automotive
+- Warehousing
+- Logistics
+- Food Processing
+- Hotels
+- Hospitality
+- Educational Institutions
+- Renewable Energy
+- Electronics Manufacturing
+- Mining
+- Power Plants
+- All Other Industries
+
+B. DYNAMIC AUDIT CHECKLIST BUILDER
+
+Allow administrators to create unlimited:
+
+- Industries
+- Business Categories
+- Parent Modules
+- Child Modules
+- Sub-Child Modules
+- Audit Categories
+- Audit Questions
+- Assessment Criteria
+- Risk Categories
+- Evidence Requirements
+
+Example hierarchy:
+
+Industry
+  → Semiconductor
+    → Cleanroom Safety
+      → Chemical Safety
+        → Chemical Storage
+          → Audit Questions
+
+The same dynamic structure must work for every industry.
+
+C. EHS AUDIT CATEGORIES
+
+1. Occupational Safety
+2. Environmental Management
+3. Fire & Life Safety
+4. Electrical Safety
+5. Chemical Safety
+6. Machine Safety
+7. Work at Height
+8. Confined Space
+9. LOTO
+10. Permit to Work
+11. Material Handling
+12. Lifting & Rigging
+13. Contractor Safety
+14. Construction Safety
+15. Warehouse Safety
+16. Emergency Management
+17. Occupational Health
+18. Ergonomics
+19. PPE
+20. Housekeeping
+21. Training & Competency
+22. Incident Management
+23. Process Safety
+24. Food Safety
+25. Security & Access Control
+
+D. AUDIT EXECUTION
+
+Every audit must support:
+
+- Audit Creation
+- Audit Reference Number
+- Client Information
+- Industry
+- Site Location
+- Audit Scope
+- Audit Team
+- Audit Schedule
+- Checklist Selection
+- Question-wise Responses
+- Photo Evidence
+- Video Evidence
+- Document Upload
+- Auditor Comments
+- GPS/Location Evidence where enabled and consented
+- Risk Classification
+- Findings
+- Recommendations
+- CAPA Assignment
+- Audit Approval Workflow
+
+E. FINDINGS CLASSIFICATION
+
+Allow configurable categories:
+
+- Critical
+- Major
+- Minor
+- Observation
+- Opportunity for Improvement
+- Good Practice
+
+Each finding must contain:
+
+- Finding ID
+- Requirement Reference
+- Actual Condition
+- Objective Evidence
+- Potential Consequence
+- Risk Rating
+- Recommended Action
+- Responsible Person
+- Target Completion Date
+- Verification Status
+
+F. AI AUDIT FEATURES
+
+AI must:
+
+- Generate dynamic audit checklists.
+- Suggest industry-specific questions.
+- Identify missing responses.
+- Analyze uploaded evidence.
+- Draft audit observations.
+- Suggest finding classifications.
+- Recommend corrective actions.
+- Generate executive summaries.
+- Calculate configurable audit scores.
+- Generate final audit reports.
+
+AI must never invent site observations or claim that an inspection occurred when it did not.
+
+Auditor verification is mandatory before final report approval.
+
+---
+
+# 5. AI DOCUMENT GENERATOR
+
+Build an AI-powered professional EHS documentation generator.
+
+A. RISK MANAGEMENT DOCUMENTS
+
+- HIRA
+- HAZID
+- JSA
+- JHA
+- Risk Assessment
+- Environmental Aspect & Impact Assessment
+- Process Risk Assessment
+- Ergonomic Risk Assessment
+- Fire Risk Assessment
+- Chemical Risk Assessment
+- Job Risk Assessment
+
+B. SAFETY DOCUMENTS
+
+- EHS Policy
+- Safety Policy
+- Environmental Policy
+- SOP
+- Safe Work Method Statement
+- Method Statement
+- Permit to Work
+- LOTO Procedure
+- Emergency Response Plan
+- Fire Evacuation Plan
+- Contractor Safety Plan
+- Construction Safety Plan
+- Electrical Safety Procedure
+- Chemical Handling Procedure
+- Confined Space Procedure
+- Work at Height Procedure
+
+C. AUDIT DOCUMENTS
+
+- EHS Audit Checklist
+- ISO Gap Assessment Report
+- Internal Audit Report
+- Third-Party Assessment Report
+- Legal Compliance Report
+- Food Safety Assessment Report
+- Fire Safety Assessment Report
+- Environmental Assessment Report
+- Vendor Audit Report
+- Contractor Audit Report
+- CAPA Report
+- Audit Closure Report
+- Management Review Report
+
+D. FOOD SAFETY DOCUMENTS
+
+- HACCP Plan Draft
+- Food Safety Policy
+- Food Safety SOP
+- Cleaning & Sanitation SOP
+- Personal Hygiene Procedure
+- Allergen Control Procedure
+- Pest Control Record
+- Temperature Monitoring Record
+- Food Safety Inspection Checklist
+- Food Safety Audit Report
+- Food Safety Risk Assessment
+- Food Handler Training Material
+
+E. AI GENERATION WORKFLOW
+
+1. Select Industry.
+2. Select Activity.
+3. Select Department.
+4. Select Equipment / Process.
+5. Select Applicable Standard or Reference.
+6. Enter Site Conditions.
+7. Enter Hazards.
+8. Upload Supporting Documents.
+9. Select Document Type.
+10. Generate AI Draft.
+11. Review and Edit.
+12. Technical Verification.
+13. Approval.
+14. Export PDF / DOCX / XLSX.
+
+Every document must have:
+
+- Document Number
+- Revision Number
+- Issue Date
+- Prepared By
+- Reviewed By
+- Approved By
+- Document Status
+- Applicable Reference
+- Revision History
+
+AI-generated documents must always be marked "DRAFT – REVIEW REQUIRED" until reviewed and approved by an authorized competent person.
+
+Never automatically approve a safety-critical document.
+
+---
+
+# 6. LEGAL AUTHORIZATION CONTROL ENGINE
+
+THIS IS A MANDATORY CORE SECURITY MODULE.
+
+Build an authorization and service eligibility control engine that prevents ARSHIEL ASSURANCE from advertising, accepting or issuing unauthorized regulated services.
+
+A. SERVICE CLASSIFICATION
+
+Every service must be classified into one of these categories:
+
+CATEGORY 1 – GENERAL CONSULTANCY
+
+Examples:
+- EHS Consultancy
+- ISO Gap Assessment
+- ISO Implementation Support
+- Documentation Development
+- Internal Audit Support
+- General Workplace Risk Assessment
+- Food Safety Consultancy
+- Management System Advisory
+
+CATEGORY 2 – INDEPENDENT ASSESSMENT
+
+Examples:
+- Independent EHS Assessments
+- Contractor EHS Audits
+- Vendor Audits
+- Workplace Safety Assessments
+- ISO Readiness Assessments
+- NFPA-Based Fire Safety Assessments
+- Food Hygiene Assessments
+
+CATEGORY 3 – AUTHORIZATION / ACCREDITATION / STATUTORY REQUIREMENT
+
+Examples:
+- Accredited ISO Certification
+- Statutory Safety Audits requiring authorized auditors
+- Government-mandated Inspections
+- Accredited Laboratory Testing
+- Official FSSAI Inspections
+- Regulated Fire System Certification
+- Legally mandated equipment inspections
+- Authorized training and certification programmes
+- Other regulated conformity assessment activities
+
+B. SERVICE CONTROL RULES
+
+For every service, store:
+
+- Service Name
+- Service Category
+- Applicable Law
+- Required Qualification
+- Required Authorization
+- Required Accreditation
+- Required Appointment
+- Competence Requirements
+- Authorization Validity
+- Verification Status
+- Approval Status
+- Evidence Documents
+
+C. AUTOMATIC RESTRICTION LOGIC
+
+If a service requires authorization and the organization does not have the required authorization:
+
+- Block service publication as an available ARSHIEL service.
+- Block unauthorized quotation generation.
+- Block unauthorized audit booking.
+- Block unauthorized certificate generation.
+- Display a restriction warning.
+- Explain which qualification or authorization is required.
+- Allow referral to an appropriately authorized external organization where lawful and transparent.
+- Maintain a restriction log.
+
+D. AUTHORIZATION STATUS
+
+Use:
+
+- Not Required for This Defined Consultancy Scope
+- Requirement Verification Pending
+- Authorization Required
+- Authorization Not Available
+- Authorization Verified
+- Authorization Expired
+- Restricted Service
+
+Do not automatically classify any service as permission-free without reviewing its exact scope, jurisdiction and applicable law.
+
+E. ADMIN AUTHORIZATION MANAGEMENT
+
+Only the authorized system administrator can:
+
+- Review authorization records.
+- Upload evidence.
+- Update validity dates.
+- Verify external accreditation.
+- Approve service eligibility.
+- Disable restricted services.
+
+Never allow ordinary users or AI-generated content to override authorization restrictions.
+
+F. IMPORTANT
+
+The authorization engine must distinguish between:
+
+1. Providing consultancy.
+2. Conducting an independent non-statutory assessment.
+3. Performing an activity that legally requires specific authorization.
+4. Issuing a regulated certificate or statutory approval.
+
+These activities must never be treated as interchangeable.
+
+---
+
+# 7. FOOD SAFETY AUDIT ENGINE
+
+Build a dedicated Food Safety module.
+
+Include:
+
+- Food Safety Management
+- ISO 22000
+- HACCP
+- Food Hygiene
+- FSSAI Compliance Assessment
+- Food Processing Safety
+- Restaurant Hygiene
+- Commercial Kitchen Safety
+- Catering Safety
+- Food Storage
+- Cold Chain
+- Temperature Control
+- Personal Hygiene
+- Pest Control
+- Cleaning & Sanitation
+- Allergen Management
+- Cross Contamination
+- Food Handler Training
+- Food Safety Risk Assessment
+
+Generate:
+
+- Food Safety Checklists
+- HACCP Drafts
+- Food Safety Audit Reports
+- Hygiene Assessment Reports
+- Food Safety CAPA Reports
+- Food Safety Documentation
+
+Restrict official food sampling, statutory inspection and regulated certification to appropriately authorized providers.
+
+---
+
+# 8. FIRE & ENVIRONMENTAL AUDIT ENGINE
+
+FIRE & LIFE SAFETY:
+
+- NFPA-Based Assessments
+- Fire Risk Assessment
+- Fire Alarm Assessment
+- Fire Protection Review
+- Fire Extinguisher Checklist
+- Emergency Exit Assessment
+- Fire Drill Evaluation
+- Fire Pump Room Review
+- Hot Work Safety
+- Electrical Fire Risk
+
+ENVIRONMENT:
+
+- ISO 14001 Assessment
+- ISO 50001 Assessment
+- Environmental Legal Register
+- Waste Management Assessment
+- Water Management Assessment
+- Air Emission Compliance Review
+- GHG Data Readiness
+- ESG Gap Assessment
+- Sustainability Documentation
+
+Apply the same authorization restrictions to statutory fire audits, regulated testing, laboratory services and accredited verification.
+
+---
+
+# 9. CAPA MANAGEMENT ENGINE
+
+Create a centralized Corrective and Preventive Action Management System.
+
+Features:
+
+- Finding Reference
+- Audit Reference
+- Finding Description
+- Root Cause Analysis
+- 5 Why Analysis
+- Fishbone Analysis
+- Corrective Action
+- Preventive Action
+- Responsible Person
+- Department
+- Target Date
+- Priority
+- Closure Evidence
+- Verification
+- Effectiveness Review
+- Overdue Alerts
+- Escalation Workflow
+
+CAPA Status:
+
+- Open
+- Assigned
+- In Progress
+- Pending Verification
+- Closed
+- Rejected
+- Overdue
+
+---
+
+# 10. MASTER DATABASE & DYNAMIC MODULE BUILDER
+
+Build an unlimited dynamic administration system.
+
+Administrator must be able to create:
+
+- New Industry
+- New Standards
+- New Legal Requirements
+- New Audit Categories
+- Parent Modules
+- Child Modules
+- Sub-Child Modules
+- New Checklist Questions
+- New Document Templates
+- New Service Categories
+- New Risk Categories
+- New Compliance Parameters
+
+Do not hardcode every checklist or industry into the frontend.
+
+Use a configurable database-driven architecture.
+
+Every module must support:
+
+- Create
+- View
+- Edit
+- Delete with appropriate permission
+- Activate
+- Deactivate
+- Version History
+- Import
+- Export
+- Search
+- Filter
+
+Never allow deletion of legal records, completed audit records or approved reports without appropriate retention and audit-trail controls.
+
+---
+
+# 11. USER ROLES & ACCESS CONTROL
+
+Create:
+
+1. Super Administrator
+2. Organization Administrator
+3. Audit Manager
+4. Lead Auditor
+5. Internal Auditor
+6. EHS Consultant
+7. Legal Compliance Reviewer
+8. Food Safety Consultant
+9. Fire Safety Consultant
+10. Document Controller
+11. Client Administrator
+12. Client Auditor
+13. Department Manager
+14. Viewer
+
+Implement:
+
+- Role-Based Access Control
+- Organization-Level Isolation
+- Site-Level Permissions
+- Module-Level Permissions
+- Approval Permissions
+- Document Access Controls
+- Audit Trail
+- Login Security
+- Session Management
+
+Client organizations must not access other organizations' confidential data.
+
+---
+
+# 12. AI ASSISTANT
+
+Create an integrated AI assistant named:
+
+ARSHIEL AI ASSURANCE ASSISTANT
+
+It must help users:
+
+- Select relevant ISO standards.
+- Understand assessment requirements.
+- Create audit checklists.
+- Identify legal compliance requirements.
+- Draft risk assessments.
+- Generate HIRA and JSA.
+- Prepare SOPs.
+- Review audit evidence.
+- Draft findings.
+- Recommend CAPA.
+- Generate reports.
+- Explain compliance gaps.
+- Identify authorization restrictions.
+
+AI SAFETY RULES:
+
+- Never invent laws or citations.
+- Never invent audit evidence.
+- Never fabricate qualifications.
+- Never generate fake certificates.
+- Never claim regulatory approval.
+- Never bypass authorization controls.
+- Always identify uncertain information.
+- Always show source references for legal requirements.
+- Require competent human review for safety-critical decisions.
+
+---
+
+# 13. NOTIFICATION & AUTOMATION ENGINE
+
+Provide:
+
+- Audit Schedule Reminders
+- Legal Due Date Alerts
+- CAPA Overdue Alerts
+- Document Revision Alerts
+- Authorization Expiry Alerts
+- Training Renewal Reminders
+- Audit Completion Notifications
+- Management Review Reminders
+- Regulatory Update Notifications
+
+Allow email and in-app notifications, with configurable permissions.
+
+---
+
+# 14. REPORTING & EXPORT ENGINE
+
+Support:
+
+- PDF
+- DOCX
+- XLSX
+- CSV
+
+Generate:
+
+- ISO Gap Analysis Reports
+- EHS Audit Reports
+- Legal Compliance Reports
+- Food Safety Reports
+- Fire Safety Reports
+- Environmental Reports
+- Contractor Audit Reports
+- Vendor Audit Reports
+- CAPA Reports
+- Management Dashboards
+- Industry Performance Reports
+
+Every final report must include an appropriate disclaimer and document status.
+
+---
+
+# 15. SECURITY, PRIVACY & DATA GOVERNANCE
+
+Implement:
+
+- Secure Authentication
+- Password Protection
+- Role-Based Permissions
+- Organization Data Isolation
+- Encryption in Transit
+- Secure File Storage
+- Backup and Recovery
+- Audit Logs
+- Data Retention Policies
+- Consent Management
+- Confidentiality Controls
+- Secure Report Sharing
+- Privacy Policy
+- Terms of Service
+
+Do not use uploaded client documents to train external AI models without appropriate consent and contractual permission.
+
+---
+
+# 16. APPLICATION SETTINGS
+
+Provide:
+
+- Company Profile
+- ARSHIEL ASSURANCE Branding
+- Organization Logo
+- User Management
+- Industry Management
+- Standards Management
+- Legal Database Settings
+- Authorization Control Settings
+- AI Settings
+- Report Templates
+- Document Numbering
+- Notification Settings
+- Language Settings
+- Date and Time Settings
+- Currency Settings
+- Backup Settings
+
+---
+
+# 17. MANDATORY DISCLAIMER & SYSTEM RESTRICTIONS
+
+Display:
+
+ARSHIEL ASSURANCE is an independent consultancy and assessment service provider.
+
+The platform provides independent auditing support, ISO gap assessments, EHS assessments, legal compliance advisory, documentation development and management system consultancy.
+
+ARSHIEL ASSURANCE is not an accredited ISO certification body, government inspection authority, OSHA enforcement agency, IOSH-approved training provider, NFPA-authorized certification organization or FSSAI licensing authority.
+
+No accreditation, statutory authorization, government approval or certification status is implied unless independently verified and legally applicable.
+
+The application does not issue official ISO certificates, statutory inspection certificates, government approvals, accredited verification certificates or regulatory licences.
+
+Where a service requires specific authorization, accreditation, professional qualification or statutory appointment, the system must block unauthorized service delivery and require verification of eligibility.
+
+AI-generated reports and documents are drafts and must be reviewed and approved by competent personnel before professional use.
+
+The application does not guarantee legal compliance, regulatory approval or freedom from penalties.
+
+---
+
+# 18. FINAL DEVELOPMENT REQUIREMENTS
+
+Build the actual working application, not just a visual dashboard or static prototype.
+
+All five core engines must be functional:
+
+1. AI ISO GAP ANALYSIS ENGINE
+2. AI LEGAL COMPLIANCE ENGINE
+3. AI EHS AUDIT ENGINE
+4. AI DOCUMENT GENERATOR
+5. LEGAL AUTHORIZATION CONTROL ENGINE
+
+Additional engines:
+
+6. FOOD SAFETY AUDIT ENGINE
+7. FIRE & LIFE SAFETY ENGINE
+8. ENVIRONMENTAL COMPLIANCE ENGINE
+9. CAPA MANAGEMENT ENGINE
+10. DYNAMIC MODULE BUILDER
+
+Mandatory technical requirements:
+
+- Responsive desktop interface
+- Responsive mobile interface
+- Real database integration
+- Secure authentication
+- Role-based access control
+- Working CRUD operations
+- AI integration
+- File uploads
+- Dynamic checklists
+- Automated calculations
+- PDF and Excel exports
+- Approval workflows
+- Audit trails
+- Legal source verification
+- Authorization restriction logic
+- Backup and recovery
+
+Use a scalable modular architecture so that new industries, standards, laws, checklists and services can be added without redesigning the entire application.
+
+First build the database architecture and core security model. Then implement each engine and connect all modules to the same master data system.
+
+Test all five core engines using realistic sample scenarios before declaring the application complete.
+
+The final product must function as a professional AI-powered independent auditing and compliance management platform under the brand:
+
+# ARSHIEL ASSURANCE
+
+"Assessing Risks. Strengthening Compliance. Improving Performance."
